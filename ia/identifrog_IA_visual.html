@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蛙抵家 Identifrog 2.0 — 資訊架構視覺圖</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f7f6f2;--text:#1a1a18;--text2:#5f5e5a;--text3:#909088;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.16);--radius:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1a1a18;--bg2:#222220;--text:#e8e6de;--text2:#9c9a92;--text3:#66645e;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);}
+}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  background:var(--bg);color:var(--text);padding:2rem 1.5rem 3rem;max-width:900px;margin:0 auto}
+header{margin-bottom:1.5rem}
+.doc-label{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:#1D9E75;background:#E1F5EE;padding:3px 10px;
+  border-radius:20px;margin-bottom:.6rem}
+h1{font-size:20px;font-weight:600;margin-bottom:.2rem}
+.sub{font-size:13px;color:var(--text2)}
+.divider{height:.5px;background:var(--border);margin:1.25rem 0}
+.controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.ctrl-btn{font-size:11px;font-weight:500;padding:4px 12px;border-radius:16px;
+  border:.5px solid var(--border2);background:transparent;color:var(--text2);
+  cursor:pointer;transition:all .15s;font-family:inherit}
+.ctrl-btn:hover{background:var(--bg2)}
+.ctrl-btn.act{background:var(--bg2);border-color:var(--text2);color:var(--text);font-weight:600}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text2);margin-bottom:1.25rem}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-sq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.badge{font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;white-space:nowrap}
+.b-new{background:#E6F1FB;color:#0C447C}
+.b-v1{background:#F1EFE8;color:#5F5E5A}
+.b-pri{background:#E1F5EE;color:#085041}
+.b-req{background:#FFF3CD;color:#633806}
+.b-late{background:#FAECE7;color:#712B13}
+.canvas-wrap{position:relative;overflow:hidden}
+.tooltip{position:absolute;background:var(--bg);border:.5px solid var(--border2);
+  border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--text);
+  pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;
+  max-width:200px;line-height:1.5;white-space:normal}
+canvas{display:block}
+.footer{margin-top:2rem;padding-top:1rem;border-top:.5px solid var(--border);
+  font-size:11px;color:var(--text3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="doc-label">D1 — 資訊架構圖（視覺版）</div>
+  <h1>蛙抵家 Identifrog 2.0</h1>
+  <p class="sub">Information Architecture Visual　｜　v1.0　｜　景澤創意 × 大同大學 × 元智大學</p>
+</header>
+<div class="divider"></div>
+<div class="controls">
+  <button class="ctrl-btn act" onclick="setFilter('all',this)">全部</button>
+  <button class="ctrl-btn" onclick="setFilter('citizen',this)" style="border-color:#1D9E75;color:#085041">公民科學層</button>
+  <button class="ctrl-btn" onclick="setFilter('guide',this)"   style="border-color:#7F77DD;color:#3C3489">智慧導覽層</button>
+  <button class="ctrl-btn" onclick="setFilter('pro',this)"     style="border-color:#D85A30;color:#712B13">專業監測層</button>
+  <button class="ctrl-btn" onclick="setFilter('global',this)"  style="border-color:#888780;color:#444441">全層共用</button>
+</div>
+<div class="legend">
+  <span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>公民科學</span>
+  <span class="leg"><span class="leg-sq" style="background:#7F77DD"></span>智慧導覽</span>
+  <span class="leg"><span class="leg-sq" style="background:#D85A30"></span>專業監測</span>
+  <span class="leg"><span class="leg-sq" style="background:#888780"></span>全層共用</span>
+  <span class="leg"><span class="badge b-new">新</span>2.0 新增</span>
+  <span class="leg"><span class="badge b-v1">v1</span>現有延伸</span>
+  <span class="leg"><span class="badge b-pri">優先</span>第一階段</span>
+  <span class="leg"><span class="badge b-req">需登入</span></span>
+  <span class="leg"><span class="badge b-late">晚期</span></span>
+</div>
+<div class="canvas-wrap">
+  <canvas id="iaCanvas"></canvas>
+  <div class="tooltip" id="tip"></div>
+</div>
+<div class="footer">
+  <span>蛙抵家 2.0 IA v1.0　｜　設計師工作參考文件</span>
+  <span id="pg-count"></span>
+</div>
+
+<script>
+const DATA={id:'root',label:'蛙抵家 2.0',type:'root',color:'#444441',children:[
+  {id:'citizen',label:'公民科學層',type:'layer',color:'#1D9E75',children:[
+    {id:'rec',label:'首頁（錄音）',type:'section',color:'#1D9E75',children:[
+      {id:'r1',label:'待機畫面',type:'page',color:'#1D9E75',badges:['v1'],note:'深色主題；中央錄音按鈕；最近一筆紀錄摘要'},
+      {id:'r2',label:'錄音中',type:'page',color:'#1D9E75',badges:['v1'],note:'聲波動畫；15 秒倒數；可提前停止'},
+      {id:'r3',label:'分析中',type:'page',color:'#1D9E75',badges:['v1'],note:'上傳等待狀態；3 秒內完成'},
+      {id:'r4',label:'結果：高信心',type:'page',color:'#1D9E75',badges:['新','優先'],note:'物種大字；信心視覺化；生態情境說明；一鍵儲存'},
+      {id:'r5',label:'結果：中/低信心',type:'page',color:'#1D9E75',badges:['新','優先'],note:'候選物種卡片列表；差異對比；引導後續行動'},
+      {id:'r6',label:'結果：無法辨識',type:'page',color:'#1D9E75',badges:['新','優先'],note:'積極正向設計；說明原因；建議下一步；仍可提交'},
+      {id:'r7',label:'儲存確認',type:'page',color:'#1D9E75',badges:['新'],note:'地點標籤選填；貢獻說明'},
+    ]},
+    {id:'hist',label:'我的紀錄',type:'section',color:'#1D9E75',children:[
+      {id:'h1',label:'紀錄列表',type:'page',color:'#1D9E75',badges:['v1'],note:'依時間排序；可篩選物種 / 日期'},
+      {id:'h2',label:'單筆紀錄詳情',type:'page',color:'#1D9E75',badges:['v1'],note:'錄音回放；辨識結果；是否已被專家確認'},
+      {id:'h3',label:'貢獻統計',type:'page',color:'#1D9E75',badges:['新'],note:'累計紀錄數；物種數；被專家確認數'},
+    ]},
+    {id:'map',label:'蛙鳴地圖',type:'section',color:'#1D9E75',children:[
+      {id:'m1',label:'標點地圖',type:'page',color:'#1D9E75',badges:['v1'],note:'所有用戶回報點；可篩選物種'},
+      {id:'m2',label:'密度熱圖',type:'page',color:'#1D9E75',badges:['新'],note:'聲景活躍度熱力圖；季節 / 時段篩選'},
+      {id:'m3',label:'地點詳情',type:'page',color:'#1D9E75',badges:['新'],note:'該地點的紀錄列表；物種組成；時間分布'},
+    ]},
+    {id:'wiki',label:'青蛙百科',type:'section',color:'#1D9E75',children:[
+      {id:'w1',label:'物種列表',type:'page',color:'#1D9E75',badges:['v1'],note:'臺灣種 + 外來種；可搜尋 / 篩選'},
+      {id:'w2',label:'物種詳情',type:'page',color:'#1D9E75',badges:['v1'],note:'形態、習性、聲紋；生態脈絡說明'},
+      {id:'w3',label:'聲紋播放器',type:'page',color:'#1D9E75',badges:['v1'],note:'可播放標準蛙鳴聲紋；波形視覺化'},
+    ]},
+    {id:'comm',label:'社群 / 協作',type:'section',color:'#1D9E75',children:[
+      {id:'c1',label:'待確認紀錄',type:'page',color:'#1D9E75',badges:['新'],note:'尚未被專家確認的不確定紀錄'},
+      {id:'c2',label:'專家回饋通知',type:'page',color:'#1D9E75',badges:['新'],note:'確認推播 / 通知頁'},
+    ]},
+  ]},
+  {id:'guide',label:'智慧導覽層',type:'layer',color:'#7F77DD',children:[
+    {id:'gentry',label:'導覽首頁',type:'section',color:'#7F77DD',children:[
+      {id:'g1',label:'附近場域列表',type:'page',color:'#7F77DD',badges:['新'],note:'依定位顯示可用場域；需位置權限'},
+      {id:'g2',label:'場域搜尋',type:'page',color:'#7F77DD',badges:['新'],note:'依名稱或地區搜尋場域'},
+    ]},
+    {id:'gsite',label:'場域頁面',type:'section',color:'#7F77DD',children:[
+      {id:'g3',label:'場域簡介',type:'page',color:'#7F77DD',badges:['新'],note:'場域名稱、類型、最佳觀察季節'},
+      {id:'g4',label:'倫理提示面板',type:'page',color:'#7F77DD',badges:['新','優先'],note:'繁殖季警示、減光建議、靜音提示'},
+      {id:'g5',label:'常見蛙種列表',type:'page',color:'#7F77DD',badges:['新'],note:'此場域已記錄物種；連結至百科頁'},
+      {id:'g6',label:'體驗路線地圖',type:'page',color:'#7F77DD',badges:['新'],note:'場域內建議路線點；點擊顯示解說'},
+    ]},
+    {id:'gsound',label:'聲景解說',type:'section',color:'#7F77DD',children:[
+      {id:'g7',label:'解說觸發頁',type:'page',color:'#7F77DD',badges:['新'],note:'錄音辨識後連結對應解說內容'},
+      {id:'g8',label:'靜音聆聽模式',type:'page',color:'#7F77DD',badges:['新'],note:'全螢幕暗色介面；適合保護區'},
+    ]},
+    {id:'gar',label:'AR 聲景',type:'section',color:'#7F77DD',children:[
+      {id:'g9',label:'AR 視角',type:'page',color:'#7F77DD',badges:['新','晚期'],note:'蛙鳴來源方向與物種標示'},
+    ]},
+  ]},
+  {id:'pro',label:'專業監測層',type:'layer',color:'#D85A30',children:[
+    {id:'pentry',label:'專業模式入口',type:'section',color:'#D85A30',children:[
+      {id:'p1',label:'解鎖 / 登入',type:'page',color:'#D85A30',badges:['新','需登入'],note:'機構帳號驗證；預設隱藏'},
+      {id:'p2',label:'專業儀表板',type:'page',color:'#D85A30',badges:['新','需登入'],note:'上傳任務列表；分析進度；報告管理'},
+    ]},
+    {id:'ppam',label:'PAM 上傳',type:'section',color:'#D85A30',children:[
+      {id:'p3',label:'上傳頁面',type:'page',color:'#D85A30',badges:['新','晚期'],note:'單檔 / 批次錄音上傳；設定時間戳'},
+      {id:'p4',label:'上傳進度',type:'page',color:'#D85A30',badges:['新'],note:'批次分析狀態；預估完成時間'},
+    ]},
+    {id:'panalysis',label:'批次分析結果',type:'section',color:'#D85A30',children:[
+      {id:'p5',label:'物種時間軸',type:'page',color:'#D85A30',badges:['新','晚期'],note:'各物種在時間軸上的偵測事件'},
+      {id:'p6',label:'物種頻率統計',type:'page',color:'#D85A30',badges:['新'],note:'各物種出現次數、時段分布圖表'},
+      {id:'p7',label:'地點熱圖',type:'page',color:'#D85A30',badges:['新'],note:'多個監測點的空間分布視覺化'},
+    ]},
+    {id:'preport',label:'報告匯出',type:'section',color:'#D85A30',children:[
+      {id:'p8',label:'報告設定',type:'page',color:'#D85A30',badges:['新','晚期'],note:'時間範圍、物種、格式（PDF / Excel）'},
+      {id:'p9',label:'報告預覽',type:'page',color:'#D85A30',badges:['新'],note:'匯出前確認報告內容'},
+    ]},
+  ]},
+  {id:'global',label:'全層共用',type:'layer',color:'#888780',children:[
+    {id:'acct',label:'帳號 / 設定',type:'section',color:'#888780',children:[
+      {id:'gl1',label:'登入 / 註冊',type:'page',color:'#888780',badges:['v1','前置必要'],note:'App 開啟即要求登入（hard gate）；Email 或社群帳號；專業模式需機構認證'},
+      {id:'gl2',label:'個人資料',type:'page',color:'#888780',badges:['v1'],note:'暱稱、通知設定'},
+      {id:'gl3',label:'App 設定',type:'page',color:'#888780',badges:['v1'],note:'深色 / 淺色主題；語言；定位'},
+      {id:'gl4',label:'關於 / 授權',type:'page',color:'#888780',badges:['v1'],note:'版本資訊；隱私政策'},
+    ]},
+    {id:'notif',label:'通知中心',type:'section',color:'#888780',children:[
+      {id:'gl5',label:'通知列表',type:'page',color:'#888780',badges:['新'],note:'專家確認；社群回饋；活動通知'},
+    ]},
+    {id:'eco',label:'環境感知提示',type:'section',color:'#888780',children:[
+      {id:'gl6',label:'繁殖季 Banner',type:'page',color:'#888780',badges:['新','優先'],note:'4–6 月首開時顯示；可關閉'},
+      {id:'gl7',label:'夜間模式觸發',type:'page',color:'#888780',badges:['新','優先'],note:'20:00–05:00 自動切換深色主題'},
+      {id:'gl8',label:'場域靜音提示',type:'page',color:'#888780',badges:['新'],note:'導覽模式特定座標觸發'},
+    ]},
+  ]},
+]};
+
+const BADGE_STYLE={'新':{bg:'#E6F1FB',fg:'#0C447C'},'v1':{bg:'#F1EFE8',fg:'#5F5E5A'},'優先':{bg:'#E1F5EE',fg:'#085041'},'需登入':{bg:'#FFF3CD',fg:'#633806'},'晚期':{bg:'#FAECE7',fg:'#712B13'},'前置必要':{bg:'#FCEBEB',fg:'#A32D2D'}};
+const canvas=document.getElementById('iaCanvas');
+const ctx=canvas.getContext('2d');
+const tip=document.getElementById('tip');
+let filter='all', nodes=[], hovered=null;
+const ROW_H=36, PAD_LEFT=16, PAD_TOP=20;
+const COLS=[PAD_LEFT, PAD_LEFT+20, PAD_LEFT+20+160, PAD_LEFT+20+160+140, PAD_LEFT+20+160+140+130];
+
+function isDark(){return matchMedia('(prefers-color-scheme:dark)').matches}
+
+function flattenVisible(node,depth=0,acc=[]){
+  if(filter!=='all'&&depth===1&&node.id!==filter) return acc;
+  const row={node,depth,x:COLS[Math.min(depth,4)],y:0,parentRow:null};
+  acc.push(row);
+  if(node.children) node.children.forEach(c=>flattenVisible(c,depth+1,acc));
+  return acc;
+}
+
+function buildLayout(){
+  nodes=flattenVisible(DATA);
+  let y=PAD_TOP;
+  nodes.forEach(row=>{row.y=y; y+=ROW_H;});
+  nodes.forEach((row,i)=>{
+    if(row.depth>0){
+      for(let j=i-1;j>=0;j--){
+        if(nodes[j].depth===row.depth-1){row.parentRow=nodes[j];break;}
+      }
+    }
+  });
+  const total=nodes.filter(r=>r.depth>=3).length;
+  document.getElementById('pg-count').textContent='共 '+total+' 個頁面狀態';
+  return y+PAD_TOP;
+}
+
+function getLayerColor(row){
+  if(row.depth===0) return isDark()?'#B4B2A9':'#444441';
+  let cur=row; while(cur&&cur.depth>1) cur=cur.parentRow;
+  return cur?cur.node.color:'#888780';
+}
+
+function hexAlpha(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function draw(){
+  const totalH=buildLayout();
+  const W=Math.min(canvas.parentElement.clientWidth||860, 860);
+  canvas.width=W; canvas.height=totalH;
+  ctx.clearRect(0,0,W,totalH);
+  const dark=isDark();
+  const tp=dark?'#e8e6de':'#1a1a18';
+  const ts=dark?'#9c9a92':'#5f5e5a';
+
+  nodes.forEach(row=>{
+    if(!row.parentRow) return;
+    const px=row.parentRow.x+6, py=row.parentRow.y+ROW_H/2;
+    const cx=row.x-8, cy=row.y+ROW_H/2;
+    ctx.strokeStyle=hexAlpha(getLayerColor(row),0.28);
+    ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,cy); ctx.lineTo(cx,cy); ctx.stroke();
+  });
+
+  nodes.forEach(row=>{
+    const color=getLayerColor(row);
+    const isHov=hovered===row;
+    const y=row.y, h=ROW_H-4, rowY=y+2;
+    if(isHov){
+      ctx.fillStyle=dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.03)';
+      ctx.beginPath(); ctx.roundRect(row.x-4,rowY,W-row.x-4,h,6); ctx.fill();
+    }
+    const dotX=row.x, dotY=rowY+h/2;
+    ctx.fillStyle=color;
+    if(row.depth===1){ctx.fillRect(dotX,rowY+4,10,h-8);}
+    else if(row.depth===2){ctx.beginPath();ctx.roundRect(dotX,dotY-4,8,8,2);ctx.fill();}
+    else{ctx.beginPath();ctx.arc(dotX+3.5,dotY,3.5,0,Math.PI*2);ctx.fill();}
+    const labelX=row.x+(row.depth===0?14:row.depth===1?16:14);
+    ctx.font=`${row.depth<=1?500:400} ${row.depth<=1?13:12}px "Noto Sans TC","PingFang TC",sans-serif`;
+    ctx.fillStyle=row.depth<=1?tp:ts;
+    ctx.textBaseline='middle';
+    ctx.fillText(row.node.label,labelX,dotY);
+    if(row.node.badges&&row.depth>=3){
+      const lw=ctx.measureText(row.node.label).width;
+      let bx=labelX+lw+8;
+      row.node.badges.forEach(b=>{
+        const bs=BADGE_STYLE[b]||{bg:'#eee',fg:'#333'};
+        ctx.font='600 10px "Noto Sans TC",sans-serif';
+        const bw=ctx.measureText(b).width+10, bh=14, by=dotY-bh/2;
+        ctx.fillStyle=bs.bg; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.fill();
+        ctx.fillStyle=bs.fg; ctx.textBaseline='middle'; ctx.fillText(b,bx+5,dotY);
+        bx+=bw+4;
+      });
+    }
+    if((row.depth===1||row.depth===2)&&row.node.children){
+      const cnt=row.node.children.length;
+      const txt=cnt+(row.depth===1?' 區塊':' 頁');
+      ctx.font=`400 11px "Noto Sans TC",sans-serif`;
+      ctx.fillStyle=ts; ctx.textBaseline='middle'; ctx.textAlign='right';
+      ctx.fillText(txt,W-16,dotY); ctx.textAlign='left';
+    }
+  });
+
+  const layerStarts=nodes.filter(r=>r.depth===1);
+  layerStarts.forEach((ls,i)=>{
+    if(i===0) return;
+    ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+    ctx.lineWidth=0.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(PAD_LEFT,ls.y); ctx.lineTo(W-PAD_LEFT,ls.y); ctx.stroke();
+  });
+}
+
+function getRowAt(mx,my){
+  for(const row of nodes){
+    if(my>=row.y&&my<row.y+ROW_H&&mx>=row.x-4) return row;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const row=getRowAt(mx,my);
+  if(row!==hovered){hovered=row; draw();}
+  if(row&&row.node.note){
+    tip.style.opacity='1';
+    tip.style.left=(mx+12)+'px'; tip.style.top=(my-10)+'px';
+    tip.innerHTML=`<strong style="color:${row.node.color}">${row.node.label}</strong><br>${row.node.note}`;
+  } else {tip.style.opacity='0';}
+});
+canvas.addEventListener('mouseleave',()=>{hovered=null;tip.style.opacity='0';draw();});
+
+function setFilter(f,btn){
+  filter=f;
+  document.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act'); draw();
+}
+
+draw();
+window.addEventListener('resize',draw);
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蛙抵家 Identifrog 2.0 — 資訊架構圖 D1</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal:    #1D9E75;
+    --teal-lt: #E1F5EE;
+    --teal-dk: #085041;
+    --purple:  #7F77DD;
+    --purple-lt:#EEEDFE;
+    --purple-dk:#3C3489;
+    --coral:   #D85A30;
+    --coral-lt:#FAECE7;
+    --coral-dk:#712B13;
+    --gray:    #888780;
+    --gray-lt: #F1EFE8;
+    --gray-dk: #444441;
+    --bg:      #ffffff;
+    --bg2:     #f7f6f2;
+    --bg3:     #f0efe9;
+    --text:    #1a1a18;
+    --text2:   #5f5e5a;
+    --text3:   #909088;
+    --border:  rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius:  8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:    #1a1a18;
+      --bg2:   #222220;
+      --bg3:   #2a2a27;
+      --text:  #e8e6de;
+      --text2: #9c9a92;
+      --text3: #66645e;
+      --border: rgba(255,255,255,0.1);
+      --border2:rgba(255,255,255,0.18);
+      --teal-lt: #04342C;
+      --purple-lt: #26215C;
+      --coral-lt: #4A1B0C;
+      --gray-lt: #2C2C2A;
+    }
+  }
+
+  body {
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 2rem; }
+  .doc-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: var(--teal-lt);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: .75rem;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: .25rem;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 1.25rem 0 1.5rem;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    background: var(--bg2);
+  }
+  .meta-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  .divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .leg { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  .badge-new    { background: #E6F1FB; color: #0C447C; }
+  .badge-v1     { background: var(--gray-lt); color: var(--gray-dk); }
+  .badge-req    { background: #FFF3CD; color: #633806; }
+  .badge-pri    { background: #E1F5EE; color: #085041; }
+  .badge-late   { background: #FAECE7; color: #712B13; }
+  .badge-must   { background: #FCEBEB; color: #A32D2D; }
+
+  @media (prefers-color-scheme: dark) {
+    .badge-new  { background: #042C53; color: #85B7EB; }
+    .badge-v1   { background: #2C2C2A; color: #B4B2A9; }
+    .badge-req  { background: #412402; color: #FAC775; }
+    .badge-pri  { background: #04342C; color: #9FE1CB; }
+    .badge-late { background: #4A1B0C; color: #F0997B; }
+  }
+
+  .nav-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .nav-tab {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .nav-tab:hover { background: var(--bg2); }
+  .nav-tab.active[data-color="teal"]   { background: var(--teal-lt); color: var(--teal-dk); border-color: var(--teal); }
+  .nav-tab.active[data-color="purple"] { background: var(--purple-lt); color: var(--purple-dk); border-color: var(--purple); }
+  .nav-tab.active[data-color="coral"]  { background: var(--coral-lt); color: var(--coral-dk); border-color: var(--coral); }
+  .nav-tab.active[data-color="gray"]   { background: var(--gray-lt); color: var(--gray-dk); border-color: var(--gray); }
+
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  .branch { margin-bottom: 8px; }
+
+  .branch-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    transition: background .12s;
+    user-select: none;
+  }
+  .branch-header:hover { background: var(--bg3); }
+
+  .branch-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .branch-title { font-weight: 600; font-size: 13px; color: var(--text); }
+  .branch-sub   { font-size: 11px; color: var(--text3); margin-left: auto; white-space: nowrap; }
+  .branch-count { font-size: 11px; color: var(--text3); }
+
+  .caret {
+    font-size: 9px;
+    color: var(--text3);
+    transition: transform .15s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .branch.open .caret { transform: rotate(90deg); }
+
+  .children {
+    padding-left: 22px;
+    margin-top: 4px;
+    border-left: 1.5px solid var(--border);
+    margin-left: 15px;
+    display: none;
+  }
+  .branch.open .children { display: block; }
+
+  .page-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 8px 11px;
+    border-radius: var(--radius);
+    margin-bottom: 4px;
+    border: 0.5px solid var(--border);
+    background: var(--bg);
+    transition: background .1s;
+  }
+  .page-item:hover { background: var(--bg2); }
+  .page-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .page-body { flex: 1; min-width: 0; }
+  .page-name { font-weight: 600; font-size: 13px; color: var(--text); }
+  .page-note { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.45; }
+  .page-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+
+  .summary-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--border);
+  }
+  .summary-chip {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+  }
+  .summary-chip strong { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="doc-label">D1 — 資訊架構圖</div>
+  <h1>蛙抵家 Identifrog 2.0</h1>
+  <p class="subtitle">Information Architecture　｜　版本 v1.0　｜　景澤創意 × 大同大學 × 元智大學</p>
+</header>
+
+<div class="meta-row">
+  <span class="meta-chip"><span class="meta-dot" style="background:var(--teal)"></span>公民科學層</span>
+  <span class="meta-chip"><span class="meta-dot" style="background:var(--purple)"></span>智慧導覽層</span>
+  <span class="meta-chip"><span class="meta-dot" style="background:var(--coral)"></span>專業監測層</span>
+  <span class="meta-chip"><span class="meta-dot" style="background:var(--gray)"></span>全層共用</span>
+</div>
+
+<div class="divider"></div>
+
+<div class="legend">
+  <span class="leg"><span class="badge badge-new">新</span>2.0 新增</span>
+  <span class="leg"><span class="badge badge-v1">v1</span>現有延伸</span>
+  <span class="leg"><span class="badge badge-pri">優先</span>第一階段優先</span>
+  <span class="leg"><span class="badge badge-req">需登入</span>需帳號</span>
+  <span class="leg"><span class="badge badge-late">晚期</span>計畫後期</span>
+  <span class="leg"><span class="badge badge-must">前置必要</span>App 啟動必要</span>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-tab active" data-color="teal"   onclick="showTab('citizen',this)">公民科學層</button>
+  <button class="nav-tab"        data-color="purple" onclick="showTab('guide',this)">智慧導覽層</button>
+  <button class="nav-tab"        data-color="coral"  onclick="showTab('pro',this)">專業監測層</button>
+  <button class="nav-tab"        data-color="gray"   onclick="showTab('global',this)">全層共用</button>
+</div>
+
+<div id="tab-citizen" class="section visible"><div class="tree" id="tree-citizen"></div></div>
+<div id="tab-guide"   class="section"><div class="tree" id="tree-guide"></div></div>
+<div id="tab-pro"     class="section"><div class="tree" id="tree-pro"></div></div>
+<div id="tab-global"  class="section"><div class="tree" id="tree-global"></div></div>
+
+<div class="summary-bar" id="summary-bar"></div>
+
+<script>
+const COLORS = { teal:"#1D9E75", purple:"#7F77DD", coral:"#D85A30", gray:"#888780" };
+
+const data = {
+  citizen: { color:"teal", label:"公民科學層", branches:[
+    { name:"首頁（錄音）", sub:"App 預設入口", pages:[
+      { name:"待機畫面",        note:"深色主題；中央錄音按鈕；最近一筆紀錄摘要",            badges:["v1","重設計"] },
+      { name:"錄音中",          note:"聲波動畫；15 秒倒數；可提前停止",                     badges:["v1","重設計"] },
+      { name:"分析中",          note:"上傳等待狀態；3 秒內完成",                             badges:["v1"] },
+      { name:"結果頁：高信心",  note:"物種大字；信心視覺化；生態情境說明；一鍵儲存",        badges:["新","優先"] },
+      { name:"結果頁：中/低信心",note:"候選物種卡片列表；差異對比；引導後續行動",           badges:["新","優先"] },
+      { name:"結果頁：無法辨識",note:"積極正向設計；說明原因；建議下一步；仍可提交",        badges:["新","優先"] },
+      { name:"儲存確認頁",      note:"地點標籤選填；貢獻說明「你的資料將用於…」",           badges:["新"] },
+    ]},
+    { name:"我的紀錄", sub:"個人歷史觀察", pages:[
+      { name:"紀錄列表",     note:"依時間排序；可篩選物種 / 日期",                badges:["v1"] },
+      { name:"單筆紀錄詳情", note:"錄音回放；辨識結果；地點；是否已被專家確認",  badges:["v1","升級"] },
+      { name:"貢獻統計",     note:"累計紀錄數；物種數；被專家確認數",            badges:["新"] },
+    ]},
+    { name:"蛙鳴地圖", sub:"聲景地理視覺化", pages:[
+      { name:"標點地圖（預設）", note:"所有用戶回報點；可篩選物種",                          badges:["v1"] },
+      { name:"密度熱圖（切換）", note:"聲景活躍度熱力圖；季節 / 時段篩選",                  badges:["新"] },
+      { name:"地點詳情頁",       note:"該地點的紀錄列表；物種組成；時間分布",               badges:["新"] },
+    ]},
+    { name:"青蛙百科", sub:"物種知識庫", pages:[
+      { name:"物種列表",   note:"臺灣種 + 外來種；可搜尋 / 篩選",                     badges:["v1"] },
+      { name:"物種詳情頁", note:"形態、習性、聲紋；生態脈絡說明（2.0 加強）",         badges:["v1","升級"] },
+      { name:"聲紋播放器", note:"可播放標準蛙鳴聲紋；波形視覺化",                     badges:["v1","升級"] },
+    ]},
+    { name:"社群 / 協作", sub:"專家標注機制", pages:[
+      { name:"待確認紀錄列表", note:"尚未被專家確認的不確定紀錄",                         badges:["新"] },
+      { name:"專家回饋通知",   note:"「你的紀錄已被確認為○○蛙」推播 / 通知頁",          badges:["新"] },
+    ]},
+  ]},
+  guide: { color:"purple", label:"智慧導覽層", branches:[
+    { name:"導覽首頁", sub:"場域入口", pages:[
+      { name:"附近場域列表", note:"依定位顯示可用的導覽場域；需位置權限", badges:["新"] },
+      { name:"場域搜尋",     note:"依名稱或地區搜尋場域",                badges:["新"] },
+    ]},
+    { name:"場域頁面", sub:"特定生態場域", pages:[
+      { name:"場域簡介",     note:"場域名稱、類型、最佳觀察季節 / 時段",                           badges:["新"] },
+      { name:"倫理提示面板", note:"繁殖季警示、減光建議、靜音提示（景澤創意提供內容）",            badges:["新","優先"] },
+      { name:"常見蛙種列表", note:"此場域已記錄物種；連結至百科頁",                               badges:["新"] },
+      { name:"體驗路線地圖", note:"場域內建議路線點；點擊顯示生態解說",                           badges:["新"] },
+    ]},
+    { name:"聲景解說", sub:"即時聆聽輔助", pages:[
+      { name:"解說觸發頁",   note:"錄音辨識後連結此場域的對應解說內容",                           badges:["新"] },
+      { name:"靜音聆聽模式", note:"全螢幕暗色介面；減少視覺干擾；適合特定保護區",                 badges:["新"] },
+    ]},
+    { name:"AR 聲景（待規劃）", sub:"教育場域體驗", pages:[
+      { name:"AR 視角", note:"用相機視角顯示蛙鳴來源方向與物種標示", badges:["新","晚期"] },
+    ]},
+  ]},
+  pro: { color:"coral", label:"專業監測層", branches:[
+    { name:"專業模式入口", sub:"需帳號解鎖", pages:[
+      { name:"解鎖申請 / 登入頁", note:"機構帳號驗證；預設在底部導航隱藏",         badges:["新","需登入"] },
+      { name:"專業儀表板",         note:"上傳任務列表；分析進度；報告管理",         badges:["新","需登入"] },
+    ]},
+    { name:"PAM 資料上傳", sub:"被動監測整合", pages:[
+      { name:"上傳頁面",   note:"選擇錄音檔案（單檔 / 批次）；設定時間戳 / 地點", badges:["新","晚期"] },
+      { name:"上傳進度頁", note:"批次分析狀態；預估完成時間",                     badges:["新"] },
+    ]},
+    { name:"批次分析結果", sub:"AI 辨識輸出", pages:[
+      { name:"物種出現時間軸", note:"各物種在時間軸上的偵測事件",            badges:["新","晚期"] },
+      { name:"物種頻率統計",   note:"各物種出現次數、時段分布圖表",          badges:["新"] },
+      { name:"地點熱圖整合",   note:"多個監測點的空間分布視覺化",            badges:["新"] },
+    ]},
+    { name:"報告匯出", sub:"環評文件輸出", pages:[
+      { name:"報告設定頁", note:"選擇時間範圍、物種、格式（PDF / Excel）", badges:["新","晚期"] },
+      { name:"預覽頁",     note:"匯出前確認報告內容",                      badges:["新"] },
+    ]},
+  ]},
+  global: { color:"gray", label:"全層共用", branches:[
+    { name:"帳號 / 設定", sub:"全層共用", pages:[
+      { name:"登入 / 註冊", note:"App 開啟即要求登入（hard gate）；Email 或社群帳號；專業模式需機構認證", badges:["v1","前置必要"] },
+      { name:"個人資料",   note:"暱稱、通知設定",                        badges:["v1"] },
+      { name:"App 設定",   note:"深色 / 淺色主題；語言；定位權限管理",   badges:["v1","升級"] },
+      { name:"關於 / 授權",note:"版本資訊；隱私政策；資料使用說明",       badges:["v1"] },
+    ]},
+    { name:"通知中心", sub:"全層共用", pages:[
+      { name:"推播通知列表", note:"專家確認、社群回饋、倫理提示、活動通知", badges:["新"] },
+    ]},
+    { name:"環境感知提示", sub:"系統層植入", pages:[
+      { name:"繁殖季 Banner",   note:"4–6 月首開時顯示；可關閉",            badges:["新","優先"] },
+      { name:"夜間模式自動觸發",note:"20:00–05:00 自動切換深色主題 + 提示卡",badges:["新","優先"] },
+      { name:"場域靜音提示",    note:"導覽模式特定座標觸發",                badges:["新"] },
+    ]},
+  ]},
+};
+
+const badgeClass = t => {
+  if(t==="新") return "badge-new";
+  if(t==="優先") return "badge-pri";
+  if(t==="v1"||t==="升級"||t==="重設計") return "badge-v1";
+  if(t==="需登入") return "badge-req";
+  if(t==="晚期") return "badge-late";
+  if(t==="前置必要") return "badge-must";
+  return "badge-v1";
+};
+
+function renderTree(tabKey) {
+  const tab = data[tabKey];
+  const container = document.getElementById("tree-" + tabKey);
+  container.innerHTML = "";
+  let total = 0;
+  tab.branches.forEach(branch => {
+    total += branch.pages.length;
+    const branchDiv = document.createElement("div");
+    branchDiv.className = "branch";
+
+    const hdr = document.createElement("div");
+    hdr.className = "branch-header";
+    hdr.innerHTML = `
+      <span class="caret">&#9654;</span>
+      <span class="branch-color" style="background:${COLORS[tab.color]}"></span>
+      <span class="branch-title">${branch.name}</span>
+      <span class="branch-sub">${branch.sub}&ensp;·&ensp;${branch.pages.length} 頁</span>`;
+
+    const kids = document.createElement("div");
+    kids.className = "children";
+
+    branch.pages.forEach(pg => {
+      const item = document.createElement("div");
+      item.className = "page-item";
+      const badges = (pg.badges||[]).map(b=>`<span class="badge ${badgeClass(b)}">${b}</span>`).join("");
+      item.innerHTML = `
+        <span class="page-dot" style="background:${COLORS[tab.color]}"></span>
+        <div class="page-body">
+          <div class="page-name">${pg.name}</div>
+          <div class="page-note">${pg.note}</div>
+          ${badges ? `<div class="page-badges">${badges}</div>` : ""}
+        </div>`;
+      kids.appendChild(item);
+    });
+
+    hdr.addEventListener("click", () => {
+      branchDiv.classList.toggle("open");
+    });
+
+    branchDiv.appendChild(hdr);
+    branchDiv.appendChild(kids);
+    container.appendChild(branchDiv);
+  });
+  return { branches: tab.branches.length, pages: total };
+}
+
+const counts = {};
+["citizen","guide","pro","global"].forEach(k => {
+  counts[k] = renderTree(k);
+});
+
+const totalPages = Object.values(counts).reduce((s,c) => s + c.pages, 0);
+const bar = document.getElementById("summary-bar");
+bar.innerHTML = `
+  <span class="summary-chip"><strong>${totalPages}</strong> 頁面狀態</span>
+  <span class="summary-chip">公民科學 <strong>${counts.citizen.pages}</strong> 頁</span>
+  <span class="summary-chip">智慧導覽 <strong>${counts.guide.pages}</strong> 頁</span>
+  <span class="summary-chip">專業監測 <strong>${counts.pro.pages}</strong> 頁</span>
+  <span class="summary-chip">全層共用 <strong>${counts.global.pages}</strong> 頁</span>
+  <span class="summary-chip" style="margin-left:auto;font-size:11px;color:var(--text3)">蛙抵家 2.0 IA v1.0</span>`;
+
+function showTab(tab, btn) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("visible"));
+  document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("visible");
+  btn.classList.add("active");
+}
+</script>
+</body>
+</html>
