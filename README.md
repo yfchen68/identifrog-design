@@ -11,7 +11,6 @@
 | [設計簡報 Design Brief v1.3](brief/Identifrog2_DesignBrief_v1.3.docx) | .docx | 設計師工作規格、計畫書附件、對外說明 |
 | [資訊架構圖 IA — 互動版](ia/identifrog_IA_diagram.html) | .html | 可展開 / 篩選的互動版，設計師工作參考 |
 | [資訊架構圖 IA — 視覺樹狀版](ia/identifrog_IA_visual.html) | .html | 樹狀圖視覺版，hover 可看頁面說明 |
-| [資訊架構圖 IA — PDF](ia/identifrog_IA_D1.pdf) | .pdf | 附附件、列印、email 傳閱用 |
 
 ---
 
