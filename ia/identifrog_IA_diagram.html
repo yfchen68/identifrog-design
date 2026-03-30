@@ -248,7 +248,7 @@
 <header>
   <div class="doc-label">D1 — 資訊架構圖</div>
   <h1>蛙抵家 Identifrog 2.0</h1>
-  <p class="subtitle">Information Architecture　｜　版本 v1.0　｜　景澤創意 × 大同大學 × 元智大學</p>
+  <p class="subtitle">Information Architecture　｜　版本 v1.6　｜　景澤創意 × 大同大學 × 元智大學</p>
 </header>
 
 <div class="meta-row">
@@ -296,7 +296,7 @@ const data = {
       { name:"結果頁：高信心",  note:"物種大字；信心視覺化；生態情境說明；一鍵儲存",        badges:["新","優先"] },
       { name:"結果頁：中/低信心",note:"候選物種卡片列表；差異對比；引導後續行動",           badges:["新","優先"] },
       { name:"結果頁：無法辨識",note:"積極正向設計；說明原因；建議下一步；仍可提交",        badges:["新","優先"] },
-      { name:"儲存確認頁",      note:"地點標籤選填；貢獻說明「你的資料將用於…」",           badges:["新"] },
+      { name:"儲存確認頁",      note:"地點標籤選填（用戶自填場域名稱，非 GPS 座標）；貢獻說明「你的資料將用於…」",           badges:["新"] },
     ]},
     { name:"我的紀錄", sub:"個人歷史觀察", pages:[
       { name:"紀錄列表",     note:"依時間排序；可篩選物種 / 日期",                badges:["v1"] },
@@ -360,7 +360,7 @@ const data = {
     { name:"帳號 / 設定", sub:"全層共用", pages:[
       { name:"登入 / 註冊", note:"App 開啟即要求登入（hard gate）；Email 或社群帳號；專業模式需機構認證", badges:["v1","前置必要"] },
       { name:"個人資料",   note:"暱稱、通知設定",                        badges:["v1"] },
-      { name:"App 設定",   note:"深色 / 淺色主題；語言；定位權限管理",   badges:["v1","升級"] },
+      { name:"App 設定",   note:"深色 / 淺色主題；語言；定位權限管理（可隨時撤銷導覽模式的位置授權）",   badges:["v1","升級"] },
       { name:"關於 / 授權",note:"版本資訊；隱私政策；資料使用說明",       badges:["v1"] },
     ]},
     { name:"通知中心", sub:"全層共用", pages:[
@@ -443,7 +443,7 @@ bar.innerHTML = `
   <span class="summary-chip">智慧導覽 <strong>${counts.guide.pages}</strong> 頁</span>
   <span class="summary-chip">專業監測 <strong>${counts.pro.pages}</strong> 頁</span>
   <span class="summary-chip">全層共用 <strong>${counts.global.pages}</strong> 頁</span>
-  <span class="summary-chip" style="margin-left:auto;font-size:11px;color:var(--text3)">蛙抵家 2.0 IA v1.0</span>`;
+  <span class="summary-chip" style="margin-left:auto;font-size:11px;color:var(--text3)">蛙抵家 2.0 IA v1.6</span>`;
 
 function showTab(tab, btn) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("visible"));
