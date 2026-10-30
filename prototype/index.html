@@ -1,0 +1,1925 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>蛙抵家 2.0 原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Source+Code+Pro:wght@400;500&family=Source+Serif+4:ital,wght@1,400;1,600&display=swap">
+<style>
+/* Layout: one phone-width column; app bar on top, instrument panels (always dark, like a field recorder) in the flow, tab bar pinned to the bottom. Night-first, per Brief v1.6. */
+:root{
+  --bg:#0c1411; --surface:#131e19; --surface-2:#1a2822; --line:#2b3c34;
+  --fg:#e3e9dd; --fg-muted:#9cad9e; --fg-faint:#728476;
+  --accent:#9cc47c; --accent-ink:#0c1411; --accent-soft:rgba(156,196,124,.14);
+  --water:#79bab2; --water-soft:rgba(121,186,178,.14);
+  --amber:#e2b357; --amber-soft:rgba(226,179,87,.13);
+  --alert:#e8937a; --alert-soft:rgba(232,147,122,.13);
+  --ok:#8ccd9f;
+  --scope-bg:#08100d; --scope-fg:#cfe3d2; --scope-shade:rgba(8,16,13,.66);
+  --quiet-bg:#000000; --quiet-fg:#7f9283;
+  --font-body:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-sci:"Source Serif 4","Noto Serif TC",Georgia,serif;
+  --font-data:"Source Code Pro",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --fs-xs:.8125rem; --fs-sm:.875rem; --fs-md:1rem; --fs-lg:1.1875rem; --fs-xl:1.5rem; --fs-2xl:2rem;
+  --r-md:14px; --r-lg:22px;
+  --tabbar-h:62px;
+  color-scheme:dark;
+}
+:root[data-app-theme="light"],
+:root[data-theme="light"]:not([data-app-theme]){
+  --bg:#edf2ea; --surface:#fbfcf9; --surface-2:#e2eadf; --line:#c5d2c2;
+  --fg:#16241c; --fg-muted:#4b5d51; --fg-faint:#6b7c70;
+  --accent:#3b7833; --accent-ink:#ffffff; --accent-soft:rgba(59,120,51,.12);
+  --water:#226f69; --water-soft:rgba(34,111,105,.11);
+  --amber:#875b06; --amber-soft:rgba(176,124,20,.13);
+  --alert:#a0412a; --alert-soft:rgba(160,65,42,.10);
+  --ok:#2b7745;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:var(--fs-md);line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
+[hidden]{display:none!important}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;margin:-1px}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--water)}
+:focus-visible{outline:2px solid var(--water);outline-offset:2px}
+h1{font-size:var(--fs-xl);line-height:1.3;margin:0;font-weight:700;text-wrap:balance}
+h2{font-size:var(--fs-lg);line-height:1.35;margin:6px 0 0;font-weight:600;text-wrap:balance}
+h3{font-size:var(--fs-lg);line-height:1.3;margin:0;font-weight:600}
+p{margin:0}
+.ic{width:18px;height:18px;flex:none}
+.muted{color:var(--fg-muted)} .faint{color:var(--fg-faint)} .small{font-size:var(--fs-sm)} .center{text-align:center}
+.sci{font-family:var(--font-sci);font-style:italic;color:var(--fg-muted)}
+.data{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:var(--fs-xs);letter-spacing:.06em;color:var(--fg-muted);margin:0}
+.stack{display:grid;gap:16px;min-width:0}
+.stack.tight{gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0}
+.row.tight{gap:8px}
+.row.between{justify-content:space-between}
+.row > .grow{flex:1 1 auto}
+
+/* App frame */
+.app{max-width:440px;margin:0 auto}
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-block:12px;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;min-width:0}
+.brand .mark{width:28px;height:28px;color:var(--accent);flex:none}
+.brand .name{font-weight:700;font-size:var(--fs-lg);letter-spacing:.02em}
+.brand .ver{font-size:var(--fs-xs);color:var(--fg-muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.env{font-size:var(--fs-xs);color:var(--water);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.view{padding-block:20px calc(var(--tabbar-h) + 36px + env(safe-area-inset-bottom,0px));min-width:0}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding:4px max(16px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabs{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.tab{display:grid;justify-items:center;gap:1px;padding:6px 0 4px;color:var(--fg-muted);text-decoration:none;font-size:var(--fs-xs);border-radius:12px}
+.tab .ic{width:24px;height:24px}
+.tab.on{color:var(--accent)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:999px;
+  border:1px solid transparent;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer;text-decoration:none;text-align:center;line-height:1.3}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.quiet{background:transparent;color:var(--fg-muted);min-height:40px;padding:0 8px;font-weight:500}
+.btn.sm{min-height:38px;padding:0 12px;font-size:var(--fs-sm)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.back{justify-self:start;padding-left:0}
+.link{background:none;border:0;padding:0;color:var(--water);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:var(--fs-sm);justify-self:start}
+
+/* Pills, meters, callouts */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:1px 10px;border-radius:999px;font-size:var(--fs-xs);border:1px solid var(--line);color:var(--fg-muted);white-space:nowrap;line-height:1.7}
+.pill.ok{color:var(--ok);border-color:currentColor}
+.pill.wait{color:var(--amber);border-color:currentColor}
+.pill.info{color:var(--water);border-color:currentColor}
+.pill.alien,.pill.diff{color:var(--alert);border-color:currentColor}
+.meter{display:inline-flex;gap:3px;vertical-align:middle}
+.meter i{width:22px;height:9px;border-radius:2px;background:var(--line)}
+.meter.sm i{width:14px;height:7px}
+.meter i.on{background:var(--accent)}
+.meter.low i.on{background:var(--amber)}
+.callout{border-radius:var(--r-md);padding:12px 14px;display:grid;gap:4px;font-size:var(--fs-sm)}
+.callout strong{font-weight:600}
+.callout.ethic{background:var(--amber-soft)} .callout.ethic strong{color:var(--amber)}
+.callout.diff{background:var(--alert-soft)} .callout.diff strong{color:var(--alert)}
+.callout.info{background:var(--water-soft)} .callout.info strong{color:var(--water)}
+.callout ul{margin:2px 0 0;padding-left:1.2em;display:grid;gap:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;display:grid;gap:8px;min-width:0}
+
+/* Instruments (always dark) */
+.scope{background:var(--scope-bg);border-radius:var(--r-md);overflow:hidden;position:relative}
+.scope canvas{display:block;width:100%;height:100%}
+.scope.wave{height:110px} .scope.spec{height:150px} .scope.overview{height:124px} .scope.tall{height:190px}
+.axis{position:absolute;right:6px;top:0;bottom:0;pointer-events:none}
+.axis span{position:absolute;right:0;transform:translateY(-50%);font-family:var(--font-data);font-size:11px;color:var(--scope-fg);opacity:.72}
+.scope-tag{position:absolute;left:8px;top:6px;font-size:11px;font-family:var(--font-data);color:var(--scope-fg);opacity:.72}
+
+/* Record home */
+.hero-rec{display:grid;justify-items:center;gap:14px;padding-block:22px 6px}
+.rec{position:relative;width:168px;height:168px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.rec::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px solid var(--accent);animation:breathe 4.8s ease-in-out infinite}
+.rec .dot{width:62px;height:62px;border-radius:50%;background:var(--accent)}
+.rec-caption{color:var(--fg-muted);font-size:var(--fs-sm)}
+@keyframes breathe{0%,100%{transform:scale(.95);opacity:.22}50%{transform:scale(1.04);opacity:.55}}
+.last{display:grid;gap:2px;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;cursor:pointer}
+.countdown{font-family:var(--font-data);font-size:3.25rem;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.countdown small{font-size:var(--fs-md);color:var(--fg-muted);margin-left:4px}
+.flow-head{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px}
+.step{font-size:var(--fs-sm);color:var(--fg-muted)}
+
+/* Trim */
+.trim{position:relative;height:124px}
+.trim .scope{position:absolute;inset:0}
+.shade{position:absolute;top:0;bottom:0;background:var(--scope-shade);pointer-events:none}
+.shade.l{left:0} .shade.r{right:0}
+.playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--scope-fg);pointer-events:none}
+.trim input[type=range]{position:absolute;inset:0;width:100%;height:100%;margin:0;background:transparent;pointer-events:none;-webkit-appearance:none;appearance:none}
+.trim input[type=range]::-webkit-slider-runnable-track{height:124px;background:transparent;border:0}
+.trim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:124px;border-radius:6px;background:var(--accent);border:3px solid var(--scope-bg);cursor:ew-resize}
+.trim input[type=range]::-moz-range-track{background:transparent;border:0}
+.trim input[type=range]::-moz-range-thumb{pointer-events:auto;width:12px;height:118px;border-radius:6px;background:var(--accent);border:3px solid var(--scope-bg);cursor:ew-resize}
+.trim input[type=range]:focus-visible{outline:2px solid var(--water);outline-offset:2px}
+
+/* Analyzing */
+.analyzing{display:grid;justify-items:center;gap:18px;padding-block:56px 24px;text-align:center}
+.pulse{width:116px;height:116px;border-radius:50%;border:1px solid var(--water);animation:breathe 2.2s ease-in-out infinite}
+
+/* Guess */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+
+/* Result */
+.summary{display:grid;gap:6px}
+.summary .level{display:flex;align-items:center;gap:10px;font-size:var(--fs-lg);font-weight:600}
+ol.cands{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cand{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;padding:14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
+.cand .rank{color:var(--fg-faint);font-size:var(--fs-sm);padding-top:3px}
+.cand-main{display:grid;gap:8px;min-width:0}
+.cand-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.hint{font-size:var(--fs-sm);color:var(--fg-faint)}
+.compare{border:1px dashed var(--water);border-radius:var(--r-md);padding:14px;display:grid;gap:8px}
+.ab-now{font-size:var(--fs-sm);color:var(--water);min-height:1.4em}
+.scope-note{display:grid;gap:8px;font-size:var(--fs-sm);color:var(--fg-muted)}
+.hidden-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hidden-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--surface-2);color:var(--fg)}
+.decide{display:grid;gap:10px;padding-top:6px;border-top:1px solid var(--line)}
+.reasons{margin:0;padding-left:1.2em;display:grid;gap:4px}
+
+/* Save */
+.field{display:grid;gap:6px}
+.field > span{font-size:var(--fs-sm);color:var(--fg-muted)}
+input.text,select.text{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;width:100%}
+ul.flist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ul.flist li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+ul.flist .who{display:grid;gap:2px;min-width:0}
+ul.flist .who span{overflow-wrap:anywhere}
+ul.flist .row{flex-wrap:nowrap;flex:none}
+.seg{border:0;margin:0;padding:0;display:grid;gap:8px;min-width:0}
+.seg legend{font-size:var(--fs-sm);color:var(--fg-muted);padding:0;margin-bottom:6px}
+.seg label{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer}
+.seg label:has(input:checked){border-color:var(--accent)}
+.seg input{margin-top:5px;accent-color:var(--accent)}
+.seg .opt{display:grid;gap:2px}
+details.box{border:1px solid var(--line);border-radius:var(--r-md);padding:10px 14px}
+details.box summary{cursor:pointer;font-size:var(--fs-sm);color:var(--fg-muted)}
+details.box[open] summary{margin-bottom:10px}
+.dwc{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:6px 12px;margin:0;font-size:var(--fs-xs)}
+.dwc dt{font-family:var(--font-data);color:var(--water)}
+.dwc dd{margin:0;overflow-wrap:anywhere}
+
+/* Saved / tracker */
+.tracker{list-style:none;margin:0;padding:0;counter-reset:step;display:grid}
+.tracker li{display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:12px;padding:10px 0;counter-increment:step}
+.tracker li::before{content:counter(step);grid-row:span 2;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);font-family:var(--font-data);font-size:var(--fs-xs);color:var(--fg-muted)}
+.tracker li.done::before{content:"✓";background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tracker li.now::before{border-color:var(--amber);color:var(--amber)}
+.tracker li span{font-size:var(--fs-sm);color:var(--fg-muted)}
+
+/* Records */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;display:grid;gap:0}
+.stat b{font-family:var(--font-data);font-size:var(--fs-xl);font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:var(--fs-xs);color:var(--fg-muted)}
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.item{display:grid;gap:6px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;text-decoration:none;color:var(--fg)}
+.item .t{font-weight:600}
+.item .m{font-size:var(--fs-sm);color:var(--fg-muted)}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:6px 12px;margin:0;font-size:var(--fs-sm)}
+.kv dt{color:var(--fg-muted)}
+.kv dd{margin:0;text-align:right;font-family:var(--font-data);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kv.wide{grid-template-columns:auto minmax(0,1fr)}
+.kv.wide dd{font-family:inherit;text-align:left}
+.saved-mark{width:64px;height:64px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.saved-mark svg{width:34px;height:34px}
+
+/* Tour */
+.site-head{display:grid;gap:4px}
+ol.route{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.sp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.sp-row:last-child{border-bottom:0}
+.quiet-overlay{position:fixed;inset:0;z-index:70;background:var(--quiet-bg);color:var(--quiet-fg);display:grid;place-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(16px,env(safe-area-inset-left,0px))}
+.quiet-inner{display:grid;justify-items:center;gap:18px;text-align:center}
+.quiet-ring{width:160px;height:160px;border-radius:50%;border:1px solid var(--quiet-fg);animation:breathe 6s ease-in-out infinite}
+.quiet-t{font-family:var(--font-data);font-size:var(--fs-2xl);letter-spacing:.04em}
+.quiet-overlay .btn.ghost{color:var(--quiet-fg);border-color:var(--quiet-fg)}
+
+/* Soundscape */
+.chart{margin:0}
+.chart svg{display:block;width:100%;height:auto}
+.chart .bf{fill:var(--accent)} .chart .bo{fill:var(--water)}
+.chart .ax{fill:var(--fg-muted);font-size:11px;font-family:var(--font-data)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:var(--fs-xs);color:var(--fg-muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend .lf{background:var(--accent)} .legend .lo{background:var(--water)}
+.nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}
+.nums div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px}
+.nums dt{font-size:var(--fs-xs);color:var(--fg-muted)}
+.nums dd{margin:0;font-family:var(--font-data);font-size:var(--fs-xl);font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.tbl th,.tbl td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font-weight:500;color:var(--fg-muted);font-size:var(--fs-xs)}
+.tbl th.num{text-align:right}
+.tbl td.num{text-align:right;font-family:var(--font-data);font-variant-numeric:tabular-nums}
+
+/* Diagnostics */
+.specplot{margin:0;display:grid;gap:6px}
+.specplot svg{display:block;width:100%;height:auto}
+.specplot .ln{fill:none;stroke:var(--water);stroke-width:1.6}
+.specplot .gl{stroke:var(--line);stroke-width:1}
+.specplot .ax{fill:var(--fg-muted);font-size:10.5px;font-family:var(--font-data)}
+.specplot .mk{stroke:var(--amber);stroke-width:1.2;stroke-dasharray:3 3}
+.specplot .mkt{fill:var(--amber)}
+.levelbar{display:flex;gap:10px;align-items:center}
+.levelbar .bar{flex:1;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.levelbar .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .08s linear}
+ol.steps{margin:0;padding-left:1.4em;display:grid;gap:6px;font-size:var(--fs-sm)}
+pre.code{margin:0;font-family:var(--font-data);font-size:var(--fs-xs);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--fg-muted)}
+textarea.copy{width:100%;min-height:160px;font-family:var(--font-data);font-size:var(--fs-xs);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px}
+
+/* LINE entry schematic */
+.phone{border:1px solid var(--line);border-radius:26px;background:var(--surface-2);overflow:hidden}
+.phone-top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.avatar svg{width:22px;height:22px}
+.chat{padding:14px;display:grid;gap:12px}
+.bubble{max-width:88%;padding:10px 12px;border-radius:16px 16px 16px 4px;background:var(--surface);font-size:var(--fs-sm);display:grid;gap:6px}
+.bubble.me{justify-self:end;border-radius:16px 16px 4px 16px;background:var(--accent-soft)}
+.bubble .pill{justify-self:start}
+.bubble .open{justify-self:start;font-size:var(--fs-sm);background:none;border:0;padding:0;color:var(--water);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.richmenu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.rm{min-height:86px;display:grid;place-items:center;align-content:center;gap:4px;padding:8px 4px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:var(--fs-sm);color:var(--fg)}
+.rm:nth-child(3n){border-right:0}
+.rm:nth-last-child(-n+3){border-bottom:0}
+.rm .ic{width:24px;height:24px;color:var(--accent)}
+
+/* Menu, gate, toast */
+ul.menu{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+ul.menu a{display:grid;gap:2px;padding:12px 14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);color:var(--fg);text-decoration:none}
+ul.menu span{font-size:var(--fs-sm);color:var(--fg-muted)}
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;
+  padding:calc(env(safe-area-inset-top,0px) + 40px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(16px,env(safe-area-inset-left,0px))}
+.gate-inner{max-width:400px;margin:0 auto;display:grid;gap:18px}
+.gate .mark{width:64px;height:64px;color:var(--accent)}
+.gate h1{font-size:var(--fs-2xl)}
+.gate ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.gate li{display:flex;gap:10px;align-items:flex-start}
+.gate li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:9px;flex:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabbar-h) + 18px + env(safe-area-inset-bottom,0px));z-index:80;
+  background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:var(--fs-sm);max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="appbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="12" r="4"/><circle cx="21.5" cy="12" r="4"/><circle cx="10.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="21.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M5.5 19.5c3.2 5 17.8 5 21 0"/></svg>
+      <span class="name">蛙抵家</span><span class="ver">2.0 原型 v0.2</span>
+    </div>
+    <span class="env" id="envChip">—</span>
+  </header>
+  <main id="view" class="view" tabindex="-1"></main>
+  <nav class="tabbar" aria-label="主要功能">
+    <div class="tabs">
+      <a class="tab" data-tab="record" href="#record"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>錄音</span></a>
+      <a class="tab" data-tab="records" href="#records"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg><span>紀錄</span></a>
+      <a class="tab" data-tab="tour" href="#tour"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></svg><span>導覽</span></a>
+      <a class="tab" data-tab="soundscape" href="#soundscape"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h1.5M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 12h-.5"/></svg><span>聲景</span></a>
+      <a class="tab" data-tab="more" href="#more"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg><span>更多</span></a>
+    </div>
+  </nav>
+</div>
+<div class="gate" id="gate" hidden></div>
+<div class="quiet-overlay" id="quiet" role="dialog" aria-modal="true" aria-label="安靜聆聽" hidden>
+  <div class="quiet-inner">
+    <div class="quiet-ring" aria-hidden="true"></div>
+    <p class="quiet-t" id="quietT">3:00</p>
+    <p>把手機放下，聽聽看有幾種聲音。</p>
+    <button class="btn ghost" id="quietExit" data-act="quietExit">結束安靜聆聽</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(function () {
+'use strict';
+document.documentElement.lang = 'zh-Hant';
+
+/* =====================================================================
+   蛙抵家 2.0 原型 v0.2（2026/10/30）：加上階段 0 實測錄音的保存與上傳
+   真的在運作：麥克風錄音（關閉回音消除／降噪／自動增益）、波形與頻譜、裁切、音訊分析、WAV 匯出
+   模擬：辨識結果、參考叫聲（合成示意音）、場域內容、聲景摘要、專家確認
+   ===================================================================== */
+
+/* ---------- 可調整的設定 ---------- */
+const APP_VER = '蛙抵家 2.0 原型 v0.2';
+// 階段 0 實測錄音的上傳位置：Google Apps Script 網頁應用程式的網址（https://script.google.com/macros/s/…/exec）。
+// 留空時，可以用測試連結帶入：?up=網址&k=上傳金鑰（打開一次之後會記在這支手機上）。金鑰不要寫在這裡。
+const UPLOAD_URL = '';
+// 和現在的 App 一樣錄 15 秒；網址加 ?sec=3 可以縮短，只給測試用
+const REC_SECONDS = (() => { try { const v = parseInt(new URLSearchParams(location.search).get('sec'), 10); return v >= 2 && v <= 30 ? v : 15; } catch (e) { return 15; } })();
+
+/* ---------- 工具 ---------- */
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.prototype.slice.call((el || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pad = n => String(n).padStart(2, '0');
+const KEY = 'identifrog2-proto-v01';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + ':' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + ':' + k, JSON.stringify(v)); } catch (e) { /* 預覽或私密視窗可能不允許 */ } },
+  clear() { try { Object.keys(localStorage).forEach(k => { if (k.indexOf(KEY) === 0) localStorage.removeItem(k); }); } catch (e) { /* 同上 */ } }
+};
+const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const UPLOAD = (() => {
+  const okUrl = u => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(u);
+  let memUrl = '', memKey = '';
+  try {
+    const q = new URLSearchParams(location.search), up = q.get('up'), k = q.get('k');
+    if (up && okUrl(up)) { memUrl = up; store.set('uploadUrl', up); }
+    if (k && /^[\w-]{6,64}$/.test(k)) { memKey = k; store.set('uploadKey', k); }
+  } catch (e) { /* 舊瀏覽器沒有 URLSearchParams */ }
+  return {
+    url() { return UPLOAD_URL || store.get('uploadUrl', '') || memUrl; },
+    key() { return store.get('uploadKey', '') || memKey; },
+    ready() { return !!(this.url() && this.key()); }
+  };
+})();
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.charset = 'utf-8';
+    s.onload = () => res(); s.onerror = () => rej(new Error('無法載入 ' + src));
+    document.head.appendChild(s);
+  });
+}
+let toastTimer = 0;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800);
+}
+function stamp(d) {
+  d = d || new Date();
+  const ds = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const dl = d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate());
+  return { iso: ds + 'T' + pad(d.getHours()), label: dl + ' ' + d.getHours() + ' 時', dateIso: ds, dateLabel: dl };
+}
+const isNight = d => { const h = (d || new Date()).getHours(); return h >= 20 || h < 5; };
+const isBreedingMonth = d => { const m = (d || new Date()).getMonth() + 1; return m >= 4 && m <= 6; };
+
+const SVG_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+const IC = {
+  play: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
+  back: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  mic: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>',
+  list: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
+  pin: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></svg>',
+  wave: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><path d="M3 12h1.5M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 12h-.5"/></svg>',
+  book: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19"/></svg>',
+  info: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" ' + SVG_STROKE + '><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/></svg>'
+};
+const frogSvg = cls => '<svg class="' + cls + '" viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="12" r="4"/><circle cx="21.5" cy="12" r="4"/><circle cx="10.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="21.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M5.5 19.5c3.2 5 17.8 5 21 0"/></svg>';
+
+/* ---------- 資料：物種（名稱與保育身分為真；叫聲參數只用來合成示意音） ---------- */
+const SPECIES = {
+  melanostictus: { zh: '黑眶蟾蜍', sci: 'Duttaphrynus melanostictus', status: '原生', call: { type: 'trill', f: 1450, rate: 26, dur: 2.2 } },
+  bankorensis: { zh: '盤古蟾蜍', sci: 'Bufo bankorensis', status: '特有種', call: { type: 'notes', f: 820, notes: 4, noteDur: 0.16, gap: 0.3 } },
+  limnocharis: { zh: '澤蛙', sci: 'Fejervarya limnocharis', status: '原生', call: { type: 'notes', f: 1750, notes: 6, noteDur: 0.07, gap: 0.12, pulsed: true } },
+  braueri: { zh: '白頷樹蛙', sci: 'Polypedates braueri', status: '原生', call: { type: 'notes', f: 2100, notes: 5, noteDur: 0.05, gap: 0.36 } },
+  megacephalus: { zh: '斑腿樹蛙', sci: 'Polypedates megacephalus', status: '外來種', call: { type: 'notes', f: 1850, notes: 5, noteDur: 0.06, gap: 0.3 } },
+  moltrechti: { zh: '莫氏樹蛙', sci: 'Zhangixalus moltrechti', status: '特有種', call: { type: 'notes', f: 1300, notes: 3, noteDur: 0.2, gap: 0.24, pulsed: true } },
+  fissipes: { zh: '小雨蛙', sci: 'Microhyla fissipes', status: '原生', call: { type: 'notes', f: 3100, notes: 8, noteDur: 0.08, gap: 0.06, pulsed: true } },
+  chinensis: { zh: '中國樹蟾', sci: 'Hyla chinensis', status: '原生', call: { type: 'notes', f: 2600, notes: 10, noteDur: 0.04, gap: 0.07 } },
+  idiootocus: { zh: '面天樹蛙', sci: 'Kurixalus idiootocus', status: '特有種', call: { type: 'notes', f: 3700, notes: 6, noteDur: 0.05, gap: 0.14 } },
+  eiffingeri: { zh: '艾氏樹蛙', sci: 'Kurixalus eiffingeri', status: '原生', call: { type: 'notes', f: 2900, notes: 4, noteDur: 0.09, gap: 0.2 } },
+  japonica: { zh: '日本樹蛙', sci: 'Buergeria japonica', status: '原生', call: { type: 'notes', f: 4200, notes: 7, noteDur: 0.05, gap: 0.09 } },
+  robusta: { zh: '褐樹蛙', sci: 'Buergeria robusta', status: '特有種', call: { type: 'notes', f: 2400, notes: 3, noteDur: 0.14, gap: 0.3 } },
+  guentheri: { zh: '貢德氏赤蛙', sci: 'Sylvirana guentheri', status: '原生', call: { type: 'notes', f: 700, notes: 2, noteDur: 0.24, gap: 0.34 } },
+  latouchii: { zh: '拉都希氏赤蛙', sci: 'Hylarana latouchii', status: '原生', call: { type: 'notes', f: 2000, notes: 5, noteDur: 0.05, gap: 0.11 } },
+  catesbeianus: { zh: '美洲牛蛙', sci: 'Lithobates catesbeianus', status: '外來種', call: { type: 'notes', f: 300, notes: 3, noteDur: 0.45, gap: 0.4 } }
+};
+const SCENARIOS = {
+  high: { level: 3, noise: '低', cands: [['melanostictus', 3], ['bankorensis', 1], ['limnocharis', 1]], hidden: ['chinensis', 'fissipes', 'guentheri', 'latouchii'] },
+  mid: { level: 2, noise: '中', cands: [['braueri', 2], ['megacephalus', 2], ['moltrechti', 1]], hidden: ['idiootocus', 'eiffingeri', 'japonica', 'robusta'], confusable: ['braueri', 'megacephalus'] },
+  low: { level: 1, noise: '高', cands: [['fissipes', 1], ['limnocharis', 1], ['chinensis', 1]], hidden: ['latouchii', 'japonica', 'idiootocus', 'eiffingeri'] },
+  none: { level: 0, noise: '高', cands: [], hidden: [] }
+};
+const ORDER = ['mid', 'high', 'low', 'none'];
+const LEVEL_TXT = ['無法辨識', '低', '中', '高'];
+const COMMON_GUESS = ['limnocharis', 'braueri', 'megacephalus', 'moltrechti', 'melanostictus', 'fissipes', 'chinensis', 'guentheri'];
+const SITES = [ /* 座標只用來排序，取概略值；內容為示意 */
+  { id: 'xinhai', name: '新海人工濕地', area: '新北市', type: '人工濕地', best: '春夏的夜晚（示意）', lat: 25.026, lon: 121.453, species: ['limnocharis', 'braueri', 'fissipes', 'melanostictus', 'guentheri'], quiet: true },
+  { id: 'huajiang', name: '華江人工濕地', area: '新北市', type: '人工濕地', best: '春夏的夜晚（示意）', lat: 25.036, lon: 121.481, species: ['limnocharis', 'melanostictus', 'fissipes', 'latouchii'], quiet: false },
+  { id: 'pond', name: '社區生態池（示意）', area: '示意場域', type: '生態池', best: '雨後的夜晚（示意）', lat: 25.067, lon: 121.522, species: ['braueri', 'chinensis', 'limnocharis'], quiet: false }
+];
+const ROUTE_POINTS = ['入口解說牌：今晚的觀察守則', '水生植物區：先停下來聽一分鐘', '觀察平台：比較兩種叫聲的節奏', '安靜聆聽區：關掉照明，只用耳朵'];
+const QUEUE = [
+  { id: 'q1', time: '21:14', reason: '低把握', level: 1, cands: [['braueri', 1], ['megacephalus', 1], ['moltrechti', 1]] },
+  { id: 'q2', time: '22:40', reason: '低把握', level: 1, cands: [['fissipes', 1], ['limnocharis', 1], ['chinensis', 1]] },
+  { id: 'q3', time: '23:52', reason: '少見', note: '外來種，這個節點第一次出現', level: 2, cands: [['catesbeianus', 2], ['guentheri', 1], ['melanostictus', 1]] },
+  { id: 'q4', time: '01:05', reason: '低把握', level: 1, cands: [['chinensis', 1], ['latouchii', 1], ['limnocharis', 1]] },
+  { id: 'q5', time: '02:31', reason: '少見', note: '外來種', level: 2, cands: [['megacephalus', 2], ['braueri', 2], ['moltrechti', 1]] },
+  { id: 'q6', time: '03:10', reason: '和過去不同', note: '過去 30 晚這個節點沒有出現', level: 2, cands: [['guentheri', 2], ['latouchii', 1], ['limnocharis', 1]] }
+];
+const UNREVIEWED = [
+  ['澤蛙', 132, '高 118・中 14'], ['白頷樹蛙', 58, '高 49・中 9'], ['小雨蛙', 47, '高 40・中 7'],
+  ['黑眶蟾蜍', 29, '高 29'], ['拉都希氏赤蛙', 18, '高 15・中 3'], ['鳥類（情境示意）', 6, '—'], ['昆蟲（情境示意）', 16, '—']
+];
+
+/* ---------- 狀態 ---------- */
+const DEFAULT_SETTINGS = { scenario: 'cycle', delayReveal: true, theme: 'default', previewBreeding: false };
+const S = {
+  user: store.get('user', null),
+  settings: Object.assign({}, DEFAULT_SETTINGS, store.get('settings', {})),
+  cycle: store.get('cycle', 0),
+  records: store.get('records', null),
+  flow: { step: 'home', presetSite: '' },
+  audioById: {},
+  micState: 'unknown', micError: '',
+  tour: { order: null, site: null, located: false },
+  queueDone: {}, queueOpen: null, ssRule: 'hold',
+  recordOpen: null,
+  diag: { session: null, result: null, raw: null, running: false, error: '', fileResult: null, fileName: '', raf: 0, iv: 0, savedId: null, savedLabel: '' },
+  liffError: '', quietTimer: 0, quietLock: null
+};
+function saveSettings() { store.set('settings', S.settings); }
+
+/* ---------- 環境 ---------- */
+const UA = navigator.userAgent || '';
+const ENV = {
+  ios: /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && 'ontouchend' in document),
+  android: /Android/.test(UA),
+  line: /\bLine\//i.test(UA),
+  secure: window.isSecureContext === true,
+  gum: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+  worklet: typeof window.AudioWorkletNode === 'function',
+  mr: typeof window.MediaRecorder === 'function'
+};
+
+/* LIFF:BEGIN */
+const LIFF_ID_DEFAULT = ''; // 在 LINE Developers 建好 LIFF 之後，把 LIFF ID 貼在這裡；或在網址後加上 ?liffId=你的ID
+const LIFF = {
+  enabled: false, sdk: null,
+  id() { try { return new URLSearchParams(location.search).get('liffId') || LIFF_ID_DEFAULT; } catch (e) { return LIFF_ID_DEFAULT; } },
+  async init() {
+    const id = this.id(); if (!id) return null;
+    await loadScript('https://static.line-scdn.net/liff/edge/2/sdk.js');
+    await window.liff.init({ liffId: id });
+    this.sdk = window.liff; this.enabled = true; return this.sdk;
+  },
+  inClient() { try { return !!(this.sdk && this.sdk.isInClient()); } catch (e) { return false; } },
+  loggedIn() { try { return !!(this.sdk && this.sdk.isLoggedIn()); } catch (e) { return false; } },
+  login() { this.sdk.login({ redirectUri: location.href }); },
+  subjectTail() { try { const t = this.sdk.getDecodedIDToken(); return t && t.sub ? String(t.sub).slice(-4) : null; } catch (e) { return null; } }
+};
+/* LIFF:END */
+
+function envLabel() {
+  if (LIFF.inClient()) return 'LINE（LIFF）';
+  if (ENV.line) return 'LINE 內建瀏覽器';
+  if (ENV.ios) return 'iOS 瀏覽器';
+  if (ENV.android) return 'Android 瀏覽器';
+  return '電腦瀏覽器';
+}
+
+/* ---------- 音訊引擎 ---------- */
+const SCOPE = { bg: '#08100d', grid: 'rgba(207,227,210,0.12)', wave: '#9cc47c' };
+const CMAP = (() => {
+  const st = [[0, [8, 16, 13]], [80, [20, 58, 56]], [140, [40, 116, 110]], [195, [150, 194, 122]], [255, [242, 246, 214]]];
+  const out = [];
+  for (let v = 0; v < 256; v++) {
+    let i = 0; while (i < st.length - 2 && v > st[i + 1][0]) i++;
+    const a = st[i][0], ca = st[i][1], b = st[i + 1][0], cb = st[i + 1][1], t = clamp((v - a) / (b - a), 0, 1);
+    out.push([0, 1, 2].map(k => Math.round(ca[k] + (cb[k] - ca[k]) * t)));
+  }
+  return out;
+})();
+const AudioEng = {
+  ctx: null, current: null, workletCtx: null,
+  ensure() {
+    if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; this.ctx = new AC(); }
+    if (this.ctx.state === 'suspended') { try { this.ctx.resume(); } catch (e) { /* 需要使用者手勢 */ } }
+    return this.ctx;
+  },
+  stop() { const c = this.current; this.current = null; if (c) { try { c.stop(); } catch (e) { /* 已結束 */ } } },
+  play(x, sr, onEnd) {
+    const ctx = this.ensure(); this.stop();
+    const buf = ctx.createBuffer(1, Math.max(1, x.length), sr);
+    buf.getChannelData(0).set(x);
+    const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
+    src.onended = () => { if (this.current === src) this.current = null; if (onEnd) onEnd(); };
+    src.start(); this.current = src;
+    return { t0: ctx.currentTime, dur: x.length / sr };
+  }
+};
+let abToken = null;
+function stopAll() { abToken = null; AudioEng.stop(); }
+function playAsync(x, sr) { return new Promise(res => { AudioEng.play(x, sr, res); }); }
+function makeAnalyser(ctx) { const a = ctx.createAnalyser(); a.fftSize = 2048; a.minDecibels = -110; a.maxDecibels = -25; a.smoothingTimeConstant = 0; return a; }
+function concat(chunks) { let n = 0; chunks.forEach(c => { n += c.length; }); const out = new Float32Array(n); let o = 0; chunks.forEach(c => { out.set(c, o); o += c.length; }); return out; }
+
+async function openMicSession() {
+  const ctx = AudioEng.ensure();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 }, video: false });
+  const track = stream.getAudioTracks()[0];
+  const src = ctx.createMediaStreamSource(stream);
+  const analyser = makeAnalyser(ctx); src.connect(analyser);
+  const sink = ctx.createGain(); sink.gain.value = 0; sink.connect(ctx.destination);
+  const chunks = []; let capturing = false, node = null, mode = 'AudioWorklet';
+  if (ENV.worklet && ctx.audioWorklet) {
+    try {
+      if (AudioEng.workletCtx !== ctx) {
+        const code = "class C extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(2048);this.n=0}process(i){const c=i[0]&&i[0][0];if(c){for(let k=0;k<c.length;k++){this.b[this.n++]=c[k];if(this.n===2048){this.port.postMessage(this.b.slice(0));this.n=0}}}return true}}registerProcessor('ifrog-cap',C);";
+        const url = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+        await ctx.audioWorklet.addModule(url);
+        AudioEng.workletCtx = ctx;
+      }
+      node = new AudioWorkletNode(ctx, 'ifrog-cap', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1, channelCountMode: 'explicit' });
+      node.port.onmessage = e => { if (capturing) chunks.push(e.data); };
+    } catch (e) { node = null; }
+  }
+  if (!node) {
+    mode = 'ScriptProcessor';
+    node = ctx.createScriptProcessor(4096, 1, 1);
+    node.onaudioprocess = e => { if (capturing) chunks.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+  }
+  src.connect(node); node.connect(sink);
+  let settings = {}; try { settings = track.getSettings ? track.getSettings() : {}; } catch (e) { settings = {}; }
+  return {
+    kind: 'mic', analyser, settings, mode, sampleRate: ctx.sampleRate, label: track.label || '',
+    start() { chunks.length = 0; capturing = true; },
+    stopCapture() { capturing = false; return concat(chunks); },
+    close() {
+      capturing = false;
+      try { src.disconnect(); node.disconnect(); sink.disconnect(); analyser.disconnect(); } catch (e) { /* 已中斷 */ }
+      stream.getTracks().forEach(t => t.stop());
+    }
+  };
+}
+function openDemoSession(scen) {
+  const ctx = AudioEng.ensure(), sr = ctx.sampleRate, x = synthChorus(sr, 15, scen, 11);
+  const buf = ctx.createBuffer(1, x.length, sr); buf.getChannelData(0).set(x);
+  const analyser = makeAnalyser(ctx), gain = ctx.createGain(); gain.gain.value = 0.7;
+  analyser.connect(gain); gain.connect(ctx.destination);
+  let src = null, t0 = 0;
+  return {
+    kind: 'demo', analyser, sampleRate: sr, settings: null,
+    start() { src = ctx.createBufferSource(); src.buffer = buf; src.connect(analyser); t0 = ctx.currentTime; src.start(); },
+    stopCapture() { const el = clamp(ctx.currentTime - t0, 0, 15); try { src.stop(); } catch (e) { /* 已結束 */ } return x.slice(0, Math.max(1, Math.floor(el * sr))); },
+    close() { try { if (src) src.disconnect(); analyser.disconnect(); gain.disconnect(); } catch (e) { /* 已中斷 */ } }
+  };
+}
+
+/* ---------- 合成示意音（不是真實叫聲） ---------- */
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function synthCall(call, sr, amp) {
+  const trill = call.type === 'trill';
+  const notes = trill ? 1 : call.notes, nd = trill ? call.dur : call.noteDur, gap = trill ? 0 : call.gap;
+  const out = new Float32Array(Math.ceil((0.2 + notes * (nd + gap)) * sr));
+  for (let k = 0; k < notes; k++) {
+    const s0 = Math.floor((0.05 + k * (nd + gap)) * sr), len = Math.floor(nd * sr);
+    let ph = 0;
+    for (let i = 0; i < len; i++) {
+      const t = i / sr, u = i / len, env = Math.pow(Math.sin(Math.PI * u), 0.5);
+      let am = 1;
+      if (trill) { const p = (t * call.rate) % 1; am = p < 0.5 ? Math.sin(Math.PI * p / 0.5) : 0; }
+      else if (call.pulsed) { am = (t * 85) % 1 < 0.55 ? 1 : 0.15; }
+      const f = call.f * (1 + 0.03 * Math.sin(2 * Math.PI * 2.5 * t) + (trill ? 0 : 0.05 * (0.5 - u)));
+      ph += 2 * Math.PI * f / sr;
+      const v = Math.sin(ph) + 0.32 * Math.sin(2 * ph) + 0.12 * Math.sin(3 * ph);
+      const j = s0 + i; if (j < out.length) out[j] += amp * env * am * v / 1.44;
+    }
+  }
+  return out;
+}
+function refSamples(id, sr) {
+  const c = synthCall(SPECIES[id].call, sr, 0.5), gap = Math.floor(0.35 * sr), out = new Float32Array(c.length * 2 + gap);
+  out.set(c, 0); out.set(c, c.length + gap); return out;
+}
+function normalize(out, peakTo) { let pk = 0; for (let i = 0; i < out.length; i++) { const a = Math.abs(out[i]); if (a > pk) pk = a; } const g = pk > 0 ? peakTo / pk : 1; for (let i = 0; i < out.length; i++) out[i] *= g; return out; }
+function synthChorus(sr, secs, scen, seed) {
+  const R = rng(seed || 7), n = Math.floor(sr * secs), out = new Float32Array(n);
+  const noiseAmp = { high: 0.004, mid: 0.012, low: 0.035, none: 0.05 }[scen] || 0.01;
+  let b = 0;
+  for (let i = 0; i < n; i++) { const w = R() * 2 - 1; b = 0.985 * b + 0.015 * w; out[i] = noiseAmp * (b * 9 + w * 0.25); }
+  if (scen === 'low' || scen === 'none') {
+    let w2 = 0;
+    for (let i = 0; i < n; i++) { const t = i / sr, g = Math.pow(Math.max(0, Math.sin(2 * Math.PI * 0.21 * t + 1.2)), 3); w2 = 0.995 * w2 + 0.005 * (R() * 2 - 1); out[i] += g * w2 * (scen === 'none' ? 3.2 : 1.6); }
+  }
+  const sc = SCENARIOS[scen];
+  const place = (id, amp, times) => { const c = synthCall(SPECIES[id].call, sr, amp); times.forEach(t => { const s = Math.floor(t * sr); for (let i = 0; i < c.length && s + i < n; i++) out[s + i] += c[i]; }); };
+  if (scen === 'high') place(sc.cands[0][0], 0.5, [0.6, 3.7, 6.9, 10.1, 12.6]);
+  if (scen === 'mid') { place(sc.cands[0][0], 0.38, [0.8, 5.3, 9.9]); place(sc.cands[1][0], 0.3, [2.9, 7.6, 12.3]); }
+  if (scen === 'low') place(sc.cands[0][0], 0.06, [1.4, 5.6, 9.1, 12.4]);
+  if (scen === 'none') { for (let k = 0; k < 7; k++) { const s = Math.floor(R() * (n - sr)); for (let i = 0; i < 400; i++) out[s + i] += (R() * 2 - 1) * 0.25 * (1 - i / 400); } }
+  return normalize(out, 0.8);
+}
+function queueClip(q, sr) {
+  const n = Math.floor(sr * 4), out = new Float32Array(n), R = rng(q.id.charCodeAt(1) * 97);
+  let b = 0; for (let i = 0; i < n; i++) { const w = R() * 2 - 1; b = 0.985 * b + 0.015 * w; out[i] = 0.02 * (b * 9 + w * 0.25); }
+  const c = synthCall(SPECIES[q.cands[0][0]].call, sr, q.level === 1 ? 0.12 : 0.35), s = Math.floor(0.5 * sr);
+  for (let i = 0; i < c.length && s + i < n; i++) out[s + i] += c[i];
+  return normalize(out, 0.8);
+}
+
+/* ---------- 分析：FFT、頻寬、底噪 ---------- */
+const FFT_N = 2048;
+const FFT = (() => {
+  const N = FFT_N, bits = Math.round(Math.log2(N)), rev = new Uint32Array(N), cos = new Float64Array(N / 2), sin = new Float64Array(N / 2), win = new Float64Array(N);
+  for (let i = 0; i < N; i++) { let r = 0; for (let k = 0; k < bits; k++) r |= ((i >> k) & 1) << (bits - 1 - k); rev[i] = r; win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)); }
+  for (let i = 0; i < N / 2; i++) { cos[i] = Math.cos(2 * Math.PI * i / N); sin[i] = Math.sin(2 * Math.PI * i / N); }
+  const re = new Float64Array(N), im = new Float64Array(N);
+  function power(x, off, acc) {
+    for (let i = 0; i < N; i++) { re[rev[i]] = x[off + i] * win[i]; im[rev[i]] = 0; }
+    for (let size = 2; size <= N; size <<= 1) {
+      const half = size >> 1, step = N / size;
+      for (let i = 0; i < N; i += size) {
+        for (let j = 0; j < half; j++) {
+          const a = i + j, b = a + half, k = j * step;
+          const tr = re[b] * cos[k] + im[b] * sin[k], ti = im[b] * cos[k] - re[b] * sin[k];
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
+      }
+    }
+    for (let k = 0; k <= N / 2; k++) acc[k] += re[k] * re[k] + im[k] * im[k];
+  }
+  return { power };
+})();
+function analyzeSamples(x, sr) {
+  const n = x.length; let peak = 0, sum = 0, clip = 0;
+  for (let i = 0; i < n; i++) { const v = x[i], a = v < 0 ? -v : v; if (a > peak) peak = a; sum += v * v; if (a >= 0.999) clip++; }
+  const db = v => 20 * Math.log10(Math.max(v, 1e-9));
+  const rms = Math.sqrt(sum / Math.max(1, n));
+  const fl = Math.max(1, Math.floor(sr * 0.05)), fr = [];
+  for (let s = 0; s + fl <= n; s += fl) { let e = 0; for (let i = s; i < s + fl; i++) e += x[i] * x[i]; fr.push(Math.sqrt(e / fl)); }
+  fr.sort((a, b) => a - b);
+  const pct = p => (fr.length ? fr[Math.min(fr.length - 1, Math.floor(p * (fr.length - 1)))] : rms);
+  const floorDb = db(pct(0.1)), loudDb = db(pct(0.95));
+  const N = FFT_N, half = N / 2, psd = new Float64Array(half + 1); let frames = 0;
+  if (n >= N) {
+    const step = Math.max(half, Math.floor((n - N) / 600));
+    for (let s = 0; s + N <= n; s += step) { FFT.power(x, s, psd); frames++; }
+    for (let k = 0; k <= half; k++) psd[k] /= frames;
+  }
+  const binHz = sr / N, k0 = Math.max(1, Math.ceil(50 / binHz));
+  let total = 0, maxP = 0;
+  for (let k = k0; k <= half; k++) { total += psd[k]; if (psd[k] > maxP) maxP = psd[k]; }
+  let cum = 0, bw99 = 0;
+  if (total > 0) for (let k = k0; k <= half; k++) { cum += psd[k]; if (cum >= 0.99 * total) { bw99 = k * binHz; break; } }
+  let roll = 0; const thr = maxP * 1e-6;
+  if (maxP > 0) for (let k = half; k >= k0; k--) { if (psd[k] > thr) { roll = k * binHz; break; } }
+  const above = f => { if (!total) return 0; let e = 0; for (let k = Math.max(k0, Math.ceil(f / binHz)); k <= half; k++) e += psd[k]; return e / total * 100; };
+  const pts = 160, spec = [];
+  for (let p = 0; p < pts; p++) {
+    const a = Math.floor(p * half / pts), b = Math.max(a + 1, Math.floor((p + 1) * half / pts)); let m = 0;
+    for (let k = a; k < b; k++) if (psd[k] > m) m = psd[k];
+    spec.push(maxP > 0 ? 10 * Math.log10(Math.max(m, maxP * 1e-12) / maxP) : -120);
+  }
+  return { duration: n / sr, sampleRate: Math.round(sr), nyquist: sr / 2, peakDb: db(peak), rmsDb: db(rms), clipPct: clip / Math.max(1, n) * 100, floorDb, loudDb, snrDb: loudDb - floorDb, bw99, roll60: roll, hf4: above(4000), hf8: above(8000), spec, frames };
+}
+const noiseLabelOf = m => (m.snrDb < 8 ? '高' : m.snrDb < 16 ? '中' : '低');
+function encodeWav(x, sr) { return new Blob([encodeWavBuffer(x, sr)], { type: 'audio/wav' }); }
+function encodeWavBuffer(x, sr) {
+  sr = Math.round(sr);
+  const n = x.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) { const s = clamp(x[i], -1, 1); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true); }
+  return buf;
+}
+function mixdown(ab) { const n = ab.length, ch = ab.numberOfChannels, out = new Float32Array(n); for (let c = 0; c < ch; c++) { const d = ab.getChannelData(c); for (let i = 0; i < n; i++) out[i] += d[i] / ch; } return out; }
+function wavRate(buf) {
+  try { const v = new DataView(buf); const tag = String.fromCharCode(v.getUint8(0), v.getUint8(1), v.getUint8(2), v.getUint8(3)) + String.fromCharCode(v.getUint8(8), v.getUint8(9), v.getUint8(10), v.getUint8(11)); return tag === 'RIFFWAVE' ? v.getUint32(24, true) : 0; } catch (e) { return 0; }
+}
+async function decodeFile(file) {
+  const ctx = AudioEng.ensure();
+  const buf = await file.arrayBuffer();
+  const origRate = wavRate(buf);
+  const ab = await new Promise((res, rej) => {
+    let done = false;
+    const ok = v => { if (!done) { done = true; res(v); } }, ng = e => { if (!done) { done = true; rej(e || new Error('decode')); } };
+    try { const p = ctx.decodeAudioData(buf, ok, ng); if (p && p.then) p.then(ok, ng); } catch (e) { ng(e); }
+  });
+  return { ab, origRate };
+}
+
+/* ---------- 繪圖（儀器面板固定深色） ---------- */
+function sizeCanvas(cv) {
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+}
+function clearScope(cv) { const g = cv.getContext('2d'); g.fillStyle = SCOPE.bg; g.fillRect(0, 0, cv.width, cv.height); }
+function readTime(an, f32, u8) {
+  if (an.getFloatTimeDomainData) { an.getFloatTimeDomainData(f32); return f32; }
+  an.getByteTimeDomainData(u8); for (let i = 0; i < u8.length; i++) f32[i] = (u8[i] - 128) / 128; return f32;
+}
+function drawLiveWave(cv, x) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  g.fillStyle = SCOPE.bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = SCOPE.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke();
+  let r = 0; for (let i = 0; i < x.length; i++) r += x[i] * x[i]; r = Math.sqrt(r / x.length);
+  const gain = clamp(0.3 / Math.max(r, 1e-4), 1, 60); // 只放大顯示，不影響錄音
+  g.strokeStyle = SCOPE.wave; g.lineWidth = Math.max(1.5, W / 320); g.lineJoin = 'round'; g.beginPath();
+  const step = x.length / W;
+  for (let c = 0; c <= W; c += 2) { const v = clamp(x[Math.min(x.length - 1, Math.floor(c * step))] * gain, -1, 1), y = H / 2 - v * H * 0.42; if (c === 0) g.moveTo(c, y); else g.lineTo(c, y); }
+  g.stroke();
+}
+function makeSpecDrawer(cv, an) {
+  const g = cv.getContext('2d'), bytes = new Uint8Array(an.frequencyBinCount); let col = null;
+  return function draw() {
+    const W = cv.width, H = cv.height, cw = Math.max(1, Math.round(window.devicePixelRatio || 1) * 2);
+    if (!col || col.width !== cw || col.height !== H) col = g.createImageData(cw, H);
+    an.getByteFrequencyData(bytes);
+    g.drawImage(cv, -cw, 0);
+    const n = bytes.length, d = col.data;
+    for (let y = 0; y < H; y++) {
+      const c = CMAP[bytes[Math.min(n - 1, Math.floor((1 - y / H) * n))]];
+      for (let k = 0; k < cw; k++) { const o = (y * cw + k) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255; }
+    }
+    g.putImageData(col, W - cw, 0);
+  };
+}
+function specAxis(el, nyq) {
+  if (!el) return; el.innerHTML = '';
+  const h = el.getBoundingClientRect().height || 150; let last = -99;
+  [20, 16, 12, 8, 4, 2, 1].filter(k => k * 1000 < nyq * 0.96).forEach(k => {
+    const top = (1 - k * 1000 / nyq) * h;
+    if (top - last < 18 || top > h - 8) return;
+    last = top;
+    const s = document.createElement('span'); s.textContent = k + 'k'; s.style.top = top + 'px'; el.appendChild(s);
+  });
+}
+function drawOverview(cv, x) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  g.fillStyle = SCOPE.bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = SCOPE.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke();
+  let peak = 0; for (let i = 0; i < x.length; i++) { const a = Math.abs(x[i]); if (a > peak) peak = a; }
+  const k = peak > 0 ? 0.9 / peak : 1, per = x.length / W;
+  g.fillStyle = SCOPE.wave;
+  for (let c = 0; c < W; c++) {
+    const s = Math.floor(c * per), e = Math.max(s + 1, Math.floor((c + 1) * per)); let mn = 1, mx = -1;
+    for (let i = s; i < e && i < x.length; i++) { const v = x[i] * k; if (v < mn) mn = v; if (v > mx) mx = v; }
+    if (mx < mn) continue;
+    const y1 = (1 - mx) * H / 2, y2 = (1 - mn) * H / 2; g.fillRect(c, y1, 1, Math.max(1, y2 - y1));
+  }
+}
+
+/* ---------- 共用片段 ---------- */
+const spName = id => (id && SPECIES[id] ? SPECIES[id].zh : '');
+function meter(lv, small, neutral) {
+  let s = ''; for (let k = 1; k <= 3; k++) s += '<i' + (k <= lv ? ' class="on"' : '') + '></i>';
+  return '<span class="meter' + (small ? ' sm' : '') + (lv === 1 && !neutral ? ' low' : '') + '" role="img" aria-label="把握：' + LEVEL_TXT[lv] + '">' + s + '</span>';
+}
+function guessText(g) { if (!g || g === 'skip') return '沒有作答'; if (g === 'unsure') return '不確定'; return spName(g); }
+function decisionText(d) {
+  if (!d) return '—';
+  if (d.type === 'adopt') return '採用系統第一名：' + spName(d.species);
+  if (d.type === 'other') return '選擇候選：' + spName(d.species);
+  if (d.type === 'own') return '維持自己的判斷：' + spName(d.species);
+  if (d.type === 'expert') return '不確定，交給專家';
+  return '—';
+}
+function recTitle(r) {
+  if (r.status === 'verified' && r.expert) return spName(r.expert.species);
+  if (r.decision && r.decision.species) return spName(r.decision.species);
+  return '交給專家判定';
+}
+function statusPills(r) {
+  const out = ['<span class="pill ok">已寫入</span>'];
+  if (r.status === 'verified') {
+    if (r.decision && r.decision.species) { const agree = r.expert && r.expert.species === r.decision.species; out.push('<span class="pill ' + (agree ? 'ok' : 'diff') + '">專家已確認・' + (agree ? '一致' : '不同') + '</span>'); }
+    else out.push('<span class="pill ok">專家已確認</span>');
+  } else out.push('<span class="pill wait">待專家確認</span>');
+  if (r.example) out.push('<span class="pill">範例</span>');
+  return out.join('');
+}
+function candCard(id, lv, i, queueId) {
+  const sp = SPECIES[id];
+  const pick = queueId ? 'data-act="queueDecide" data-q="' + queueId + '" data-type="other" data-id="' + id + '"' : 'data-act="decide" data-type="other" data-id="' + id + '"';
+  return `<li class="cand">
+    <span class="rank data">${i + 1}</span>
+    <div class="cand-main">
+      <div class="cand-title"><h3>${esc(sp.zh)}</h3><span class="sci">${esc(sp.sci)}</span></div>
+      <div class="row tight">${meter(lv, true, true)}<span class="small muted">相對把握</span><span class="pill ${sp.status === '外來種' ? 'alien' : ''}">${esc(sp.status)}</span></div>
+      <p class="hint">【待補】${esc(sp.zh)}的辨識重點，由大浪據與專家提供。</p>
+      <div class="row tight">
+        <button class="btn ghost sm" data-act="playRef" data-id="${id}">${IC.play}參考叫聲（示意音）</button>
+        <button class="btn quiet sm" ${pick}>我選這個</button>
+      </div>
+    </div>
+  </li>`;
+}
+function dwcHtml(r) {
+  const tail = S.user ? S.user.tail : '----';
+  const verified = r.status === 'verified' && r.expert;
+  const sp = verified ? r.expert.species : (r.decision && r.decision.species);
+  const idBy = verified ? '專家（示意）' : (r.decision && r.decision.type === 'expert') ? '尚未判定（交給專家）' : '使用者 •••' + tail + (r.decision && r.decision.type === 'adopt' ? '（採用系統建議）' : '');
+  const rem = ['系統把握：' + LEVEL_TXT[r.level], r.cands.length ? '系統第一名：' + spName(r.cands[0]) : '系統無法辨識', '先聽先猜：' + guessText(r.guess), '使用者判讀：' + decisionText(r.decision)].join('；');
+  const rows = [
+    ['scientificName', sp ? SPECIES[sp].sci : '（待專家判定）'],
+    ['identifiedBy', idBy],
+    ['identificationVerificationStatus', verified ? '專家已確認（verified）' : '待專家確認（unverified）'],
+    ['identificationRemarks', rem],
+    ['eventDate', r.timeIso],
+    ['locality', r.site || '（未填）']
+  ];
+  return rows.map(kv => '<dt>' + kv[0] + '</dt><dd>' + esc(kv[1]) + '</dd>').join('');
+}
+function seedRecords() {
+  const at = (daysAgo, h) => { const d = new Date(); d.setDate(d.getDate() - daysAgo); d.setHours(h, 0, 0, 0); return stamp(d); };
+  const a = at(6, 20), b = at(3, 21), c = at(1, 22);
+  return [
+    { id: 'ex3', example: true, timeIso: c.iso, timeLabel: c.label, site: '', level: 1, cands: ['fissipes', 'limnocharis', 'chinensis'], guess: 'unsure', decision: { type: 'expert', species: null }, status: 'pending', expert: null },
+    { id: 'ex2', example: true, timeIso: b.iso, timeLabel: b.label, site: '華江人工濕地', level: 2, cands: ['braueri', 'megacephalus', 'moltrechti'], guess: 'megacephalus', decision: { type: 'own', species: 'megacephalus' }, status: 'verified', expert: { species: 'braueri' } },
+    { id: 'ex1', example: true, timeIso: a.iso, timeLabel: a.label, site: '新海人工濕地', level: 3, cands: ['limnocharis', 'latouchii', 'fissipes'], guess: 'limnocharis', decision: { type: 'adopt', species: 'limnocharis' }, status: 'verified', expert: { species: 'limnocharis' } }
+  ];
+}
+if (!Array.isArray(S.records)) { S.records = seedRecords(); store.set('records', S.records); }
+
+/* ---------- 路由與畫面 ---------- */
+const VIEWS = {}, AFTER = {};
+let cleanups = [];
+const onCleanup = fn => { cleanups.push(fn); };
+function runCleanups() { const c = cleanups; cleanups = []; c.forEach(fn => { try { fn(); } catch (e) { /* 忽略 */ } }); }
+const ROUTES = ['record', 'records', 'tour', 'soundscape', 'more', 'diagnostics', 'entry', 'prefs', 'about'];
+const TAB_OF = { record: 'record', records: 'records', tour: 'tour', soundscape: 'soundscape', more: 'more', diagnostics: 'more', entry: 'more', prefs: 'more', about: 'more' };
+function route() { const h = (location.hash || '').replace(/^#/, ''); return ROUTES.indexOf(h) >= 0 ? h : 'record'; }
+let lastKey = '', lastRoute = '';
+function render() {
+  runCleanups(); stopAll(); renderGate();
+  const r = route();
+  if (r !== lastRoute) { clearTimeout(toastTimer); $('#toast').hidden = true; lastRoute = r; }
+  $$('.tab').forEach(t => { const on = t.dataset.tab === TAB_OF[r]; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+  $('#view').innerHTML = VIEWS[r]();
+  if (AFTER[r]) AFTER[r]();
+  $('#envChip').textContent = envLabel();
+  const key = [r, r === 'record' ? S.flow.step : '', S.recordOpen || '', S.tour.site || '', S.queueOpen || ''].join('|');
+  if (key !== lastKey) { window.scrollTo(0, 0); lastKey = key; }
+}
+function go(hash) { if (location.hash === '#' + hash) render(); else location.hash = hash; }
+
+/* ----- 錄音流程 ----- */
+function micReason() {
+  if (!ENV.secure) return '這個網址不是 HTTPS，瀏覽器不允許使用麥克風。';
+  if (!ENV.gum) return '這個瀏覽環境不支援麥克風。';
+  if (S.micState === 'denied') return S.micError === 'NotAllowedError' ? '麥克風權限被拒絕，或這個預覽環境不開放麥克風。' : '麥克風無法開啟（' + S.micError + '）。';
+  return '';
+}
+const FLOW_VIEWS = {
+  home() {
+    const breeding = isBreedingMonth() || S.settings.previewBreeding;
+    const mine = S.records.filter(r => !r.example)[0];
+    const blocked = !(ENV.gum && ENV.secure) || S.micState === 'denied';
+    const preset = S.flow.presetSite;
+    return `<section class="stack">
+      ${breeding ? '<div class="callout ethic"><strong>繁殖季</strong><span>現在是繁殖高峰期，請輕聲走動，避免干擾。</span></div>' : ''}
+      ${isNight() ? '<div class="callout ethic"><strong>夜間觀察</strong><span>請避免用強光直照草叢；需要照明時，把光朝向地面。</span></div>' : ''}
+      ${preset ? '<div class="callout info"><strong>場域：' + esc(preset) + '</strong><span>這次的紀錄會預先填上這個場域。</span></div>' : ''}
+      <div class="hero-rec">
+        <p class="eyebrow">先安靜聽一下，再開始錄</p>
+        <button class="rec" data-act="startRec" aria-label="開始錄音，最長 15 秒"><span class="dot"></span></button>
+        <p class="rec-caption">錄 15 秒，可以提前停止</p>
+      </div>
+      ${blocked ? '<div class="callout info"><strong>這裡不能使用麥克風</strong><span>' + esc(micReason()) + '可以先用示範錄音或上傳音檔，走完整個流程。</span></div>' : ''}
+      <div class="row">
+        <button class="btn ghost grow" data-act="startDemo">用示範錄音</button>
+        <label class="btn ghost grow" for="fileIn">上傳音檔</label>
+        <input id="fileIn" class="vh" type="file" accept="audio/*,.wav,.m4a,.mp3,.aac">
+      </div>
+      ${mine ? '<button class="last" data-act="openRecord" data-id="' + esc(mine.id) + '"><span class="eyebrow">最近一筆</span><span>' + esc(recTitle(mine)) + '</span><span class="small muted">' + esc(mine.timeLabel) + (mine.site ? '・' + esc(mine.site) : '') + '</span></button>' : ''}
+    </section>`;
+  },
+  recording() {
+    const f = S.flow;
+    return `<section class="stack">
+      <div class="flow-head"><button class="btn quiet" data-act="cancelFlow">取消</button><span class="pill info">${f.source === 'demo' ? '示範錄音（合成）' : '麥克風錄音中'}</span></div>
+      <div class="countdown"><span id="cd">15</span><small>秒</small></div>
+      <div class="scope wave"><canvas id="waveCv"></canvas><span class="scope-tag">波形</span></div>
+      <div class="scope spec"><canvas id="specCv"></canvas><span class="scope-tag">頻譜</span><div class="axis" id="specAx"></div></div>
+      <p class="muted center small">錄音時不用一直看螢幕，聽聽周圍的聲音。</p>
+      <button class="btn block" data-act="stopRec">停止，進入裁切</button>
+    </section>`;
+  },
+  trim() {
+    const f = S.flow, max = Math.floor(f.dur * 10) / 10;
+    return `<section class="stack">
+      <div class="flow-head"><button class="btn quiet" data-act="cancelFlow">取消</button><span class="step">裁切確認</span></div>
+      <h1>保留最清楚的蛙鳴</h1>
+      <p class="muted">拖動兩側的把手，保留叫聲最清楚的一段，幫助辨識。也可以直接送出。</p>
+      <div class="trim">
+        <div class="scope overview"><canvas id="ovCv"></canvas></div>
+        <div class="shade l" id="shadeL"></div><div class="shade r" id="shadeR"></div><div class="playhead" id="ph" hidden></div>
+        <input type="range" id="trimA" min="0" max="${max}" step="0.1" value="${f.trimA}" aria-label="開始時間（秒）">
+        <input type="range" id="trimB" min="0" max="${max}" step="0.1" value="${Math.min(f.trimB, max)}" aria-label="結束時間（秒）">
+      </div>
+      <div class="row between"><span class="data small" id="trimLabel"></span><button class="btn ghost sm" data-act="playTrim">${IC.play}播放這一段</button></div>
+      <div class="row"><button class="btn ghost grow" data-act="skipTrim">跳過，直接送出</button><button class="btn grow" data-act="submitTrim">送出這一段</button></div>
+    </section>`;
+  },
+  analyzing() {
+    return '<section class="analyzing"><div class="pulse" aria-hidden="true"></div><h1>正在比對叫聲</h1><p class="muted small">原型使用模擬的辨識結果；音訊分析是真的。</p></section>';
+  },
+  guess() {
+    return `<section class="stack">
+      <div class="flow-head"><button class="btn quiet" data-act="cancelFlow">取消</button><span class="step">先聽先猜</span></div>
+      <h1>先聽聽看，你覺得是哪一種蛙？</h1>
+      <p class="muted">在看系統的建議之前，先記下你的判斷。這一步可以跳過，不會影響專家確認。</p>
+      <button class="btn ghost" data-act="playMine">${IC.play}再聽一次錄音</button>
+      <div class="chips" role="group" aria-label="常見的蛙">${COMMON_GUESS.map(id => '<button class="chip" data-act="guess" data-id="' + id + '">' + esc(SPECIES[id].zh) + '</button>').join('')}</div>
+      <div class="row"><button class="btn ghost grow" data-act="guess" data-id="unsure">我不確定</button><button class="btn quiet" data-act="guess" data-id="skip">跳過這一步</button></div>
+    </section>`;
+  },
+  result() {
+    const f = S.flow, sc = SCENARIOS[f.scenario];
+    if (sc.level === 0) return noResultHtml(f);
+    const top = sc.cands[0][0], g = f.guess && SPECIES[f.guess] ? f.guess : null;
+    const hint = { 3: '叫聲特徵清楚。', 2: '前兩名分數接近，建議對比參考叫聲再決定。', 1: '可以靠近水邊、等周圍安靜後再錄一次。' }[sc.level];
+    let diff = '';
+    if (g) {
+      const rank = sc.cands.findIndex(c => c[0] === g), hid = sc.hidden.indexOf(g);
+      if (g === top) diff = '<div class="callout info"><strong>和你的初判一致</strong><span>你先猜的是「' + esc(spName(g)) + '」，也是系統的第一名。</span></div>';
+      else if (rank > 0) diff = '<div class="callout diff"><strong>和你的初判不同</strong><span>你先猜「' + esc(spName(g)) + '」，系統把它排在第 ' + (rank + 1) + ' 名，第一名是「' + esc(spName(top)) + '」。可以用參考叫聲再比一次；兩種判斷都會保留，專家都看得到。</span></div>';
+      else if (hid >= 0) diff = '<div class="callout diff"><strong>你的初判不在前三名</strong><span>「' + esc(spName(g)) + '」排在第 ' + (hid + 4) + ' 名，在下面「沒有列出的物種」裡。</span></div>';
+      else diff = '<div class="callout diff"><strong>你的初判不在系統的候選裡</strong><span>系統這次沒有考慮「' + esc(spName(g)) + '」。如果你很確定，可以維持自己的判斷。</span></div>';
+    }
+    let cmp = '';
+    if (sc.confusable) {
+      const A = sc.confusable[0], B = sc.confusable[1];
+      cmp = `<div class="compare"><p class="eyebrow">容易混淆</p><h2>${esc(spName(A))}和${esc(spName(B))}</h2>
+        <p class="small muted">交替播放你的錄音和兩種參考叫聲：你的錄音 → ${esc(spName(A))} → 你的錄音 → ${esc(spName(B))}。</p>
+        <button class="btn ghost block" data-act="abCompare">${IC.play}交替播放四段</button><p class="ab-now" id="abNow" aria-live="polite"></p>
+        <p class="hint">【待補】兩者的區辨重點，由大浪據與專家提供。</p></div>`;
+    }
+    return `<section class="stack">
+      <div class="flow-head"><button class="btn quiet" data-act="cancelFlow">取消</button><span class="pill">結果為示意資料</span></div>
+      <div class="summary">
+        <p class="eyebrow">辨識把握</p>
+        <div class="level">${meter(sc.level)}<span>${LEVEL_TXT[sc.level]}</span></div>
+        <p class="small muted">背景噪音：${esc(f.noise)}。${hint}</p>
+        <button class="link" data-act="toggle" data-target="whyPct">為什麼不顯示百分比？</button>
+        <p class="small muted" id="whyPct" hidden>百分比容易被當成「準確率」。系統只用三段表示相對的把握，最後仍由專家聽錄音確認。</p>
+      </div>
+      ${diff}${cmp}
+      <ol class="cands" aria-label="系統建議的候選物種">${sc.cands.map((c, i) => candCard(c[0], c[1], i)).join('')}</ol>
+      <div class="scope-note">
+        <span>系統依分數列出前 3 名；另有 ${sc.hidden.length} 個物種分數較低，沒有列出。</span>
+        <button class="link" data-act="toggle" data-target="hiddenList">查看沒有列出的物種</button>
+        <ul class="hidden-list" id="hiddenList" hidden>${sc.hidden.map((id, i) => '<li><span>' + (i + 4) + '. ' + esc(spName(id)) + '</span><span class="faint small">分數較低</span></li>').join('')}</ul>
+      </div>
+      <div class="decide">
+        <h2>你的判讀</h2>
+        <button class="btn block" data-act="decide" data-type="adopt" data-id="${top}">我也覺得是${esc(spName(top))}</button>
+        ${g && g !== top ? '<button class="btn ghost block" data-act="decide" data-type="own" data-id="' + g + '">維持我的判斷：' + esc(spName(g)) + '</button>' : ''}
+        <button class="btn ghost block" data-act="decide" data-type="expert">不確定，交給專家</button>
+        <p class="small muted">也可以在候選卡上按「我選這個」。不管怎麼選，所有錄音都會交給專家確認。</p>
+      </div>
+    </section>`;
+  },
+  save() {
+    const f = S.flow, w = f.when, site = f.site != null ? f.site : f.presetSite;
+    return `<section class="stack">
+      <div class="flow-head"><button class="btn quiet" data-act="backToResult">${IC.back}改判讀</button><span class="step">儲存</span></div>
+      <h1>儲存這筆紀錄</h1>
+      <div class="panel"><p class="eyebrow">你的判讀</p><p>${esc(decisionText(f.decision))}</p>${f.guess && f.guess !== 'skip' ? '<p class="small muted">先聽先猜：' + esc(guessText(f.guess)) + '</p>' : ''}</div>
+      <label class="field" for="siteIn"><span>場域名稱（選填）</span><input class="text" id="siteIn" list="siteList" maxlength="40" autocomplete="off" placeholder="例如：新海人工濕地" value="${esc(site || '')}"></label>
+      <datalist id="siteList">${SITES.map(s => '<option value="' + esc(s.name) + '"></option>').join('')}</datalist>
+      <p class="small muted">不會讀取 GPS。地圖上只顯示到場域，不顯示精確位置。</p>
+      <fieldset class="seg"><legend>觀察時間</legend>
+        <label><input type="radio" name="tm" value="hour" ${f.timeMode !== 'date' ? 'checked' : ''}><span class="opt"><span>${esc(w.label)}</span><span class="small muted">記到小時，看得出蛙在幾點叫</span></span></label>
+        <label><input type="radio" name="tm" value="date" ${f.timeMode === 'date' ? 'checked' : ''}><span class="opt"><span>${esc(w.dateLabel)}</span><span class="small muted">只記日期</span></span></label>
+      </fieldset>
+      <div class="callout info"><strong>你的資料會怎麼用</strong><span>錄音歸你所有。平臺保存一份副本，供辨識與專家確認；對外只公開彙整後的分布，不公開單筆紀錄的位置。</span></div>
+      <details class="box"><summary>研究用欄位（Darwin Core）</summary><dl class="dwc" id="dwcBox">${dwcHtml(draftRecord())}</dl></details>
+      <button class="btn block" data-act="saveRecord">儲存</button>
+    </section>`;
+  },
+  saved() {
+    return `<section class="stack">
+      <div class="saved-mark">${IC.check}</div>
+      <h1>已寫入你的紀錄</h1>
+      <ol class="tracker">
+        <li class="done"><strong>已寫入</strong><span>紀錄已保存到你的帳號。</span></li>
+        <li class="now"><strong>待專家確認</strong><span>專家會聽這段錄音，判定物種。</span></li>
+        <li><strong>專家確認結果</strong><span>確認後在 LINE 通知你，每週彙整一次。</span></li>
+      </ol>
+      <p class="small muted">寫入成功不代表物種已經確定；這三個狀態會分開記錄。</p>
+      <div class="row"><button class="btn ghost grow" data-act="newRec">再錄一筆</button><button class="btn grow" data-act="openRecord" data-id="${esc(S.flow.savedId)}">看這筆紀錄</button></div>
+    </section>`;
+  }
+};
+function noResultHtml(f) {
+  const m = f.metrics, rs = [];
+  if (m.peakDb < -30) rs.push('錄到的聲音很小，可能離聲源太遠。');
+  if (m.clipPct > 0.5) rs.push('有爆音，可能太靠近，或有風切聲。');
+  if (m.snrDb < 8) rs.push('背景聲音和其他聲音差不多大，叫聲被蓋過了。');
+  if (!rs.length) rs.push('這段聲音可能不是蛙鳴，或叫聲太短。');
+  return `<section class="stack">
+    <div class="flow-head"><button class="btn quiet" data-act="cancelFlow">取消</button><span class="pill">結果為示意資料</span></div>
+    <h1>這段錄音還聽不出是哪種蛙</h1>
+    <p>無法辨識也是有用的紀錄，它記下了這個時間、這個地方的聲音狀況。</p>
+    <div class="panel"><p class="eyebrow">可能的原因（依錄音分析）</p><ul class="reasons">${rs.map(r => '<li>' + esc(r) + '</li>').join('')}</ul></div>
+    <div class="panel"><p class="eyebrow">可以試試</p><ul class="reasons"><li>靠近水邊，但不要踏進草叢。</li><li>等周圍安靜 10 秒再錄。</li><li>背對風，或用手稍微擋住手機下方的麥克風。</li></ul></div>
+    <button class="btn block" data-act="retry">再錄一次</button>
+    <button class="btn ghost block" data-act="decide" data-type="expert">仍然送出，交給專家聽</button>
+  </section>`;
+}
+const FLOW_AFTER = {
+  trim() {
+    const f = S.flow, cv = $('#ovCv'), A = $('#trimA'), B = $('#trimB'), max = +A.max;
+    sizeCanvas(cv); drawOverview(cv, f.samples);
+    const upd = which => {
+      let a = +A.value, b = +B.value;
+      if (b - a < 1) { if (which === 'a') { a = Math.max(0, b - 1); A.value = a; } else { b = Math.min(max, a + 1); B.value = b; } a = +A.value; b = +B.value; }
+      f.trimA = a; f.trimB = b;
+      $('#shadeL').style.width = (a / f.dur * 100) + '%';
+      $('#shadeR').style.width = ((f.dur - b) / f.dur * 100) + '%';
+      $('#trimLabel').textContent = a.toFixed(1) + '–' + b.toFixed(1) + ' 秒（共 ' + (b - a).toFixed(1) + ' 秒）';
+    };
+    A.addEventListener('input', () => upd('a')); B.addEventListener('input', () => upd('b'));
+    upd('b');
+    const onR = () => { sizeCanvas(cv); drawOverview(cv, f.samples); };
+    window.addEventListener('resize', onR);
+    onCleanup(() => { window.removeEventListener('resize', onR); cancelAnimationFrame(f.phRaf); });
+  },
+  async analyzing() {
+    const f = S.flow; analyzeFlow(f);
+    await sleep(1300);
+    if (S.flow !== f || f.step !== 'analyzing') return;
+    f.step = S.settings.delayReveal && SCENARIOS[f.scenario].level > 0 ? 'guess' : 'result';
+    if (route() === 'record') render();
+  }
+};
+VIEWS.record = () => (FLOW_VIEWS[S.flow.step] || FLOW_VIEWS.home)();
+AFTER.record = () => { const fn = FLOW_AFTER[S.flow.step]; if (fn) fn(); };
+
+function peekScenario() { return S.settings.scenario === 'cycle' ? ORDER[S.cycle % ORDER.length] : S.settings.scenario; }
+function analyzeFlow(f) {
+  const a = Math.floor(f.trimA * f.sr), b = Math.max(a + 1, Math.floor(f.trimB * f.sr));
+  f.metrics = analyzeSamples(f.samples.subarray(a, b), f.sr);
+  if (!f.scenario) f.scenario = peekScenario();
+  if (S.settings.scenario === 'cycle') { S.cycle = (S.cycle + 1) % 1000; store.set('cycle', S.cycle); }
+  f.noise = f.source === 'demo' ? SCENARIOS[f.scenario].noise : noiseLabelOf(f.metrics);
+  f.when = stamp();
+}
+async function startMic() {
+  const preset = S.flow.presetSite;
+  if (!(ENV.gum && ENV.secure)) { S.micState = 'unsupported'; render(); toast('這個環境不能使用麥克風，可以改用示範錄音。'); return; }
+  AudioEng.ensure();
+  let sess;
+  try { sess = await openMicSession(); S.micState = 'ok'; }
+  catch (e) { S.micState = 'denied'; S.micError = (e && e.name) || '錯誤'; render(); toast('麥克風沒有開啟，可以改用示範錄音。'); return; }
+  if (route() !== 'record') { sess.close(); return; }
+  S.flow = { step: 'recording', source: 'mic', session: sess, presetSite: preset };
+  render(); sess.start(); beginCountdown(15);
+}
+function startDemo() {
+  const preset = S.flow.presetSite, scen = peekScenario(), sess = openDemoSession(scen);
+  S.flow = { step: 'recording', source: 'demo', session: sess, scenario: scen, presetSite: preset };
+  render(); sess.start(); beginCountdown(15);
+}
+function beginCountdown(sec) {
+  const f = S.flow, sess = f.session, an = sess.analyser, wave = $('#waveCv'), spec = $('#specCv');
+  sizeCanvas(wave); sizeCanvas(spec); clearScope(spec); specAxis($('#specAx'), sess.sampleRate / 2);
+  const f32 = new Float32Array(an.fftSize), u8 = new Uint8Array(an.fftSize), drawSpec = makeSpecDrawer(spec, an), t0 = performance.now();
+  let raf = 0;
+  const loop = () => { drawLiveWave(wave, readTime(an, f32, u8)); drawSpec(); raf = requestAnimationFrame(loop); };
+  raf = requestAnimationFrame(loop);
+  const iv = setInterval(() => {
+    const left = Math.max(0, sec - (performance.now() - t0) / 1000), el = $('#cd');
+    if (el) el.textContent = String(Math.ceil(left));
+    if (left <= 0) finishRecording();
+  }, 150);
+  onCleanup(() => {
+    clearInterval(iv); cancelAnimationFrame(raf);
+    if (S.flow.step === 'recording' && S.flow.session === sess) { try { sess.stopCapture(); } catch (e) { /* 忽略 */ } sess.close(); S.flow = { step: 'home', presetSite: f.presetSite }; }
+  });
+}
+function finishRecording() {
+  const f = S.flow; if (f.step !== 'recording') return;
+  const sess = f.session, x = sess.stopCapture(); sess.close();
+  f.sr = sess.sampleRate; f.session = null;
+  if (x.length < f.sr) { toast('錄音不到 1 秒，請再試一次。'); S.flow = { step: 'home', presetSite: f.presetSite }; render(); return; }
+  f.samples = x; f.dur = x.length / f.sr; f.trimA = 0; f.trimB = Math.floor(f.dur * 10) / 10; f.step = 'trim';
+  render();
+}
+async function handleFlowFile(file) {
+  const preset = S.flow.presetSite;
+  try {
+    const d = await decodeFile(file), sr = d.ab.sampleRate; let x = mixdown(d.ab);
+    if (x.length > sr * 30) x = x.slice(0, sr * 30);
+    if (x.length < sr) { toast('音檔不到 1 秒。'); return; }
+    S.flow = { step: 'trim', source: 'file', samples: x, sr: sr, dur: x.length / sr, trimA: 0, trimB: Math.floor(x.length / sr * 10) / 10, presetSite: preset };
+    render();
+  } catch (e) { toast('這個音檔無法讀取，請改用 WAV、M4A 或 MP3。'); }
+}
+function cancelFlow() {
+  const f = S.flow;
+  if (f.session) { try { f.session.stopCapture(); } catch (e) { /* 忽略 */ } f.session.close(); }
+  S.flow = { step: 'home', presetSite: f.presetSite || '' }; render();
+}
+function segOf(f, maxSec) { const a = Math.floor(f.trimA * f.sr), b = Math.floor(Math.min(f.trimB, f.trimA + (maxSec || 99)) * f.sr); return f.samples.subarray(a, Math.max(a + 1, b)); }
+function playTrim() {
+  const f = S.flow; stopAll();
+  const ph = $('#ph'), info = AudioEng.play(segOf(f), f.sr, () => { if (ph) ph.hidden = true; cancelAnimationFrame(f.phRaf); });
+  if (!ph) return; ph.hidden = false;
+  const ctx = AudioEng.ctx;
+  const tick = () => { const el = ctx.currentTime - info.t0; ph.style.left = (clamp((f.trimA + el) / f.dur, 0, 1) * 100) + '%'; if (el < info.dur) f.phRaf = requestAnimationFrame(tick); };
+  tick();
+}
+function playMine() { const f = S.flow; stopAll(); AudioEng.play(segOf(f), f.sr); }
+function playRef(id) { stopAll(); const sr = AudioEng.ensure().sampleRate; AudioEng.play(refSamples(id, sr), sr); }
+async function abCompare() {
+  const f = S.flow, sc = SCENARIOS[f.scenario], A = sc.confusable[0], B = sc.confusable[1], sr = AudioEng.ensure().sampleRate;
+  stopAll(); const token = {}; abToken = token;
+  const mine = segOf(f, 3), seq = [[mine, f.sr, '你的錄音'], [refSamples(A, sr), sr, spName(A) + '（示意音）'], [mine, f.sr, '你的錄音'], [refSamples(B, sr), sr, spName(B) + '（示意音）']];
+  const label = t => { const el = $('#abNow'); if (el) el.textContent = t; };
+  for (let i = 0; i < seq.length; i++) {
+    if (abToken !== token) { label(''); return; }
+    label('正在播放 ' + (i + 1) + '／4：' + seq[i][2]);
+    await playAsync(seq[i][0], seq[i][1]);
+    if (abToken !== token) { label(''); return; }
+    await sleep(250);
+  }
+  label(''); abToken = null;
+}
+function draftRecord() {
+  const f = S.flow, sc = SCENARIOS[f.scenario], siteEl = $('#siteIn'), tmEl = $('input[name="tm"]:checked');
+  const site = siteEl ? siteEl.value.trim().slice(0, 40) : ((f.site != null ? f.site : f.presetSite) || '');
+  const tm = tmEl ? tmEl.value : (f.timeMode || 'hour');
+  return { id: 'draft', example: false, timeIso: tm === 'date' ? f.when.dateIso : f.when.iso, timeLabel: tm === 'date' ? f.when.dateLabel : f.when.label, site: site, level: sc.level, cands: sc.cands.map(c => c[0]), guess: f.guess || null, decision: f.decision, status: 'pending', expert: null, source: f.source, noise: f.noise };
+}
+function captureSaveForm() { const f = S.flow, si = $('#siteIn'), tm = $('input[name="tm"]:checked'); if (si) f.site = si.value.trim().slice(0, 40); if (tm) f.timeMode = tm.value; }
+function saveRecord() {
+  const f = S.flow, d = draftRecord();
+  d.id = 'r' + Date.now().toString(36);
+  S.records.unshift(d); store.set('records', S.records);
+  S.audioById[d.id] = { samples: f.samples, sr: f.sr, a: f.trimA, b: f.trimB };
+  f.savedId = d.id; f.step = 'saved'; render();
+}
+
+/* ----- 我的紀錄 ----- */
+VIEWS.records = () => {
+  if (S.recordOpen) { const r = S.records.find(x => x.id === S.recordOpen); if (r) return recordDetail(r); S.recordOpen = null; }
+  const sp = {}; let ver = 0;
+  S.records.forEach(r => { const s = r.status === 'verified' && r.expert ? r.expert.species : (r.decision && r.decision.species); if (s) sp[s] = 1; if (r.status === 'verified') ver++; });
+  return `<section class="stack">
+    <h1>我的紀錄</h1>
+    <div class="stats"><div class="stat"><b>${S.records.length}</b><span>筆紀錄</span></div><div class="stat"><b>${Object.keys(sp).length}</b><span>種蛙</span></div><div class="stat"><b>${ver}</b><span>專家已確認</span></div></div>
+    ${S.records.length ? '<ul class="list">' + S.records.map(r => '<li><button class="item" data-act="openRecord" data-id="' + esc(r.id) + '"><span class="t">' + esc(recTitle(r)) + '</span><span class="m">' + esc(r.timeLabel) + (r.site ? '・' + esc(r.site) : '') + '</span><span class="row tight">' + statusPills(r) + '</span></button></li>').join('') + '</ul>' : '<p class="muted">還沒有紀錄。到「錄音」錄下第一段蛙鳴吧。</p>'}
+    <p class="small muted">標示「範例」的是示意資料。原型的紀錄只存在這台裝置的瀏覽器裡。</p>
+  </section>`;
+};
+function recordDetail(r) {
+  const au = S.audioById[r.id], verified = r.status === 'verified' && r.expert, exp = verified ? spName(r.expert.species) : '';
+  const disagree = verified && r.decision && r.decision.species && r.decision.species !== r.expert.species;
+  return `<section class="stack">
+    <button class="btn quiet back" data-act="closeRecord">${IC.back}我的紀錄</button>
+    <div><p class="eyebrow">${esc(r.timeLabel)}${r.site ? '・' + esc(r.site) : ''}</p><h1>${esc(recTitle(r))}</h1></div>
+    <div class="row tight">${statusPills(r)}</div>
+    <ol class="tracker">
+      <li class="done"><strong>已寫入</strong><span>紀錄已保存。</span></li>
+      <li class="${verified ? 'done' : 'now'}"><strong>專家確認</strong><span>${verified ? '專家已聽過這段錄音。' : '等待專家聽這段錄音。'}</span></li>
+      <li class="${verified ? 'done' : ''}"><strong>結果</strong><span>${verified ? '專家確認為「' + esc(exp) + '」。' : '還沒有結果。'}</span></li>
+    </ol>
+    ${disagree ? '<div class="callout diff"><strong>專家的判定和你不同</strong><span>你選的是「' + esc(spName(r.decision.species)) + '」，專家確認為「' + esc(exp) + '」。可以聽兩種參考叫聲比較看看。</span></div><div class="row"><button class="btn ghost sm" data-act="playRef" data-id="' + r.decision.species + '">' + IC.play + esc(spName(r.decision.species)) + '</button><button class="btn ghost sm" data-act="playRef" data-id="' + r.expert.species + '">' + IC.play + esc(exp) + '</button></div>' : ''}
+    <dl class="kv wide">
+      <dt>你的判讀</dt><dd>${esc(decisionText(r.decision))}</dd>
+      <dt>先聽先猜</dt><dd>${esc(guessText(r.guess))}</dd>
+      <dt>系統建議</dt><dd>${r.cands.length ? esc(r.cands.map(spName).join('、')) + '（把握：' + LEVEL_TXT[r.level] + '）' : '無法辨識'}</dd>
+      <dt>錄音</dt><dd>${au ? '<button class="btn ghost sm" data-act="playRecord" data-id="' + esc(r.id) + '">' + IC.play + '播放</button>' : (r.example ? '範例紀錄沒有錄音。' : '原型只在這次開啟期間保留錄音。')}</dd>
+    </dl>
+    <details class="box"><summary>研究用欄位（Darwin Core）</summary><dl class="dwc">${dwcHtml(r)}</dl></details>
+  </section>`;
+}
+
+/* ----- 導覽 ----- */
+VIEWS.tour = () => {
+  if (S.tour.site) { const s = SITES.find(x => x.id === S.tour.site); if (s) return siteDetail(s); S.tour.site = null; }
+  const order = S.tour.order || SITES.map(s => s.id);
+  return `<section class="stack">
+    <h1>導覽</h1>
+    <p class="muted">到了濕地，掃現場的 QR code 會直接打開該場域的導覽；也可以用一次定位，找出最近的場域。</p>
+    <button class="btn ghost block" data-act="locateOnce">${IC.pin}用一次定位找附近場域</button>
+    <p class="small muted" id="locNote">${S.tour.located ? '已依距離排序。座標用完就丟掉了，沒有保存或上傳。' : '定位只讀一次，用來排序場域，讀完就丟掉，不會保存或上傳。'}</p>
+    <ul class="list">${order.map((id, i) => { const s = SITES.find(x => x.id === id); return '<li><button class="item" data-act="openSite" data-id="' + s.id + '"><span class="row between"><span class="t">' + esc(s.name) + '</span>' + (S.tour.located && i === 0 ? '<span class="pill info">最近</span>' : '') + '</span><span class="m">' + esc(s.type) + '・' + esc(s.area) + '</span></button></li>'; }).join('')}</ul>
+    <p class="small muted">場域內容為示意，正式內容由景澤創意提供。</p>
+  </section>`;
+};
+function siteDetail(s) {
+  const breeding = isBreedingMonth() || S.settings.previewBreeding;
+  return `<section class="stack">
+    <button class="btn quiet back" data-act="closeSite">${IC.back}導覽</button>
+    <div class="site-head"><p class="eyebrow">${esc(s.type)}・${esc(s.area)}</p><h1>${esc(s.name)}</h1><p class="small muted">建議時段：${esc(s.best)}</p></div>
+    <div class="callout ethic"><strong>倫理聆聽</strong><ul>
+      <li>${breeding ? '現在是繁殖高峰期，請輕聲走動，避免干擾。' : '請輕聲走動，留在步道上，不踩踏水邊植物。'}</li>
+      <li>夜間請避免強光直照草叢；需要照明時，把光朝向地面。</li>
+      ${s.quiet ? '<li>這裡有安靜聆聽區，進入後請停止交談。</li>' : ''}
+      <li>不捕捉、不觸摸蛙類。</li>
+    </ul></div>
+    <h2>這裡常聽到的蛙</h2>
+    <div>${s.species.map(id => '<div class="sp-row"><span>' + esc(spName(id)) + ' <span class="sci small">' + esc(SPECIES[id].sci) + '</span></span><button class="btn ghost sm" data-act="playRef" data-id="' + id + '" aria-label="播放' + esc(spName(id)) + '的參考叫聲（示意音）">' + IC.play + '聽</button></div>').join('')}</div>
+    <h2>體驗路線</h2>
+    <ol class="route">${ROUTE_POINTS.map(p => '<li>' + esc(p) + '</li>').join('')}</ol>
+    <p class="small muted">路線與物種為示意，正式內容由景澤創意提供；參考叫聲是合成的示意音。</p>
+    <button class="btn block" data-act="quietMode">進入安靜聆聽（3 分鐘）</button>
+    <button class="btn ghost block" data-act="recordHere" data-id="${s.id}">在這裡錄音</button>
+  </section>`;
+}
+function haversine(la1, lo1, la2, lo2) {
+  const r = Math.PI / 180, dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r;
+  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(a));
+}
+function locateOnce() {
+  const note = $('#locNote');
+  if (!navigator.geolocation) { note.textContent = '這個環境不支援定位，請直接選場域。'; return; }
+  note.textContent = '正在讀取一次定位…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    let la = pos.coords.latitude, lo = pos.coords.longitude;
+    S.tour.order = SITES.map(s => ({ id: s.id, d: haversine(la, lo, s.lat, s.lon) })).sort((x, y) => x.d - y.d).map(x => x.id);
+    la = null; lo = null; // 座標用完即丟
+    S.tour.located = true;
+    if (route() === 'tour') render();
+    toast('已依距離排序，座標沒有保存。');
+  }, err => {
+    const n = $('#locNote'); if (n) n.textContent = '沒有取得定位（' + (err && err.code === 1 ? '權限被拒絕，或這個環境不開放定位' : '無法定位') + '）。請直接選場域。';
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 });
+}
+async function quietMode() {
+  stopAll();
+  const q = $('#quiet'); q.hidden = false;
+  try { if (navigator.wakeLock) S.quietLock = await navigator.wakeLock.request('screen'); } catch (e) { S.quietLock = null; }
+  const t0 = Date.now(), total = 180;
+  const tick = () => { const left = Math.max(0, total - Math.floor((Date.now() - t0) / 1000)); $('#quietT').textContent = Math.floor(left / 60) + ':' + pad(left % 60); if (!left) quietExit(); };
+  tick(); clearInterval(S.quietTimer); S.quietTimer = setInterval(tick, 500);
+  $('#quietExit').focus();
+}
+function quietExit() {
+  clearInterval(S.quietTimer);
+  try { if (S.quietLock) S.quietLock.release(); } catch (e) { /* 忽略 */ }
+  S.quietLock = null; $('#quiet').hidden = true;
+}
+
+/* ----- 個人聲景 ----- */
+function hourChart() {
+  const hours = ['19', '20', '21', '22', '23', '00', '01', '02', '03', '04'];
+  const frogs = [8, 26, 41, 52, 47, 39, 30, 22, 15, 10], others = [3, 3, 2, 2, 2, 1, 1, 1, 1, 6];
+  const W = 360, H = 190, L = 32, R = 8, T = 12, B = 28, pw = W - L - R, ph = H - T - B, max = 60;
+  const y = v => T + ph - v / max * ph, bw = pw / hours.length;
+  let g = '';
+  [0, 20, 40, 60].forEach(v => { g += '<line class="gl" x1="' + L + '" x2="' + (L + pw) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="ax" x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>'; });
+  hours.forEach((h, i) => {
+    const x = (L + i * bw + bw * 0.19).toFixed(1), w = (bw * 0.62).toFixed(1);
+    g += '<rect class="bf" x="' + x + '" y="' + y(frogs[i]).toFixed(1) + '" width="' + w + '" height="' + (frogs[i] / max * ph).toFixed(1) + '" rx="2"/>';
+    g += '<rect class="bo" x="' + x + '" y="' + y(frogs[i] + others[i]).toFixed(1) + '" width="' + w + '" height="' + (others[i] / max * ph).toFixed(1) + '" rx="1"/>';
+    if (i % 2 === 0) g += '<text class="ax" x="' + (L + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle">' + h + ':00</text>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="每小時判讀數：蛙類在 22 點最多，共 52 筆">' + g + '</svg>';
+}
+VIEWS.soundscape = () => {
+  if (S.queueOpen) { const q = QUEUE.find(x => x.id === S.queueOpen); if (q) return queueItem(q); S.queueOpen = null; }
+  const now = new Date(), y = new Date(now.getTime() - 864e5), doneN = QUEUE.filter(q => S.queueDone[q.id]).length;
+  const reasonCls = r => (r === '少見' ? 'alien' : r === '低把握' ? 'wait' : 'info');
+  return `<section class="stack">
+    <div><p class="eyebrow">個人聲景・示意</p><h1>昨晚的聲景</h1><p class="small muted">錄音節點：新海人工濕地 A 點・${y.getMonth() + 1}/${y.getDate()} 19:00 – ${now.getMonth() + 1}/${now.getDate()} 05:00</p></div>
+    <div class="callout info"><span>錄音節點整晚記錄，代理挑出需要你看的判讀；LINE 每天早上送一則摘要，點開就到這一頁。手機網頁不會在背景錄音，全日紀錄由節點負責。</span></div>
+    <figure class="chart">${hourChart()}<figcaption class="legend"><span><i class="lf"></i>蛙類</span><span><i class="lo"></i>鳥類與昆蟲（情境示意）</span></figcaption></figure>
+    <dl class="nums"><div><dt>判讀</dt><dd>312</dd></div><div><dt>蛙類</dt><dd>290</dd></div><div><dt>鳥類（情境示意）</dt><dd>6</dd></div><div><dt>昆蟲（情境示意）</dt><dd>16</dd></div></dl>
+    <div class="row between"><h2>待你審閱</h2><span class="pill ${doneN === QUEUE.length ? 'ok' : 'wait'}">已審 ${doneN}／${QUEUE.length}</span></div>
+    <p class="small muted">代理依三個規則挑選：辨識把握低、少見、和過去紀錄不同。</p>
+    <ul class="list">${QUEUE.map(q => '<li><button class="item" data-act="openQueue" data-id="' + q.id + '"><span class="row between"><span class="t data">' + q.time + '</span><span class="row tight"><span class="pill ' + reasonCls(q.reason) + '">' + q.reason + '</span>' + (S.queueDone[q.id] ? '<span class="pill ok">已審</span>' : '') + '</span></span><span class="m">' + esc(spName(q.cands[0][0])) + '？' + (q.note ? '・' + esc(q.note) : '') + '</span></button></li>').join('')}</ul>
+    <details class="box"><summary>沒有送審的 306 筆</summary>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>判讀</th><th class="num">筆數</th><th>把握分布</th></tr></thead><tbody>${UNREVIEWED.map(u => '<tr><td>' + esc(u[0]) + '</td><td class="num">' + u[1] + '</td><td class="small muted">' + esc(u[2]) + '</td></tr>').join('')}</tbody></table></div>
+      <p class="small muted">這些判讀沒有送給你審，但都可以回查；挑選規則與版本也會記錄下來。</p>
+    </details>
+    <h2>沒有審閱的判讀，要怎麼處理？</h2>
+    <fieldset class="seg"><legend class="vh">採認規則</legend>
+      <label><input type="radio" name="ssRule" value="hold" ${S.ssRule === 'hold' ? 'checked' : ''}><span class="opt"><span>暫存在裝置，不發布</span><span class="small muted">只有你審過的判讀進入公共資料；公共資料會偏向被挑出的少見或低把握判讀。</span></span></label>
+      <label><input type="radio" name="ssRule" value="batch" ${S.ssRule === 'batch' ? 'checked' : ''}><span class="opt"><span>看過摘要後批次發布，標示「未逐筆核對」</span><span class="small muted">資料量完整，但含有未核對的錯誤；用抽核估計殘餘錯誤率。</span></span></label>
+    </fieldset>
+    <p class="small muted">這是晶創計畫要比較的兩種規則，原型先讓你感受差別。</p>
+  </section>`;
+};
+function queueText(d) { return d.type === 'adopt' ? '確認第一名：' + spName(d.species) : d.type === 'other' ? '選擇：' + spName(d.species) : d.type === 'expert' ? '交給專家' : '這不是蛙'; }
+function queueItem(q) {
+  const done = S.queueDone[q.id];
+  return `<section class="stack">
+    <button class="btn quiet back" data-act="closeQueue">${IC.back}聲景摘要</button>
+    <div><p class="eyebrow">待審判讀・<span class="data">${q.time}</span></p><h1>${esc(q.reason)}${q.note ? '：' + esc(q.note) : ''}</h1></div>
+    <button class="btn ghost" data-act="playQueue" data-id="${q.id}">${IC.play}播放這一段（示意音）</button>
+    <div class="summary"><p class="eyebrow">辨識把握</p><div class="level">${meter(q.level)}<span>${LEVEL_TXT[q.level]}</span></div></div>
+    <ol class="cands">${q.cands.map((c, i) => candCard(c[0], c[1], i, q.id)).join('')}</ol>
+    ${done ? '<div class="callout info"><strong>已審閱</strong><span>' + esc(queueText(done)) + '</span></div>' : ''}
+    <div class="decide">
+      <button class="btn block" data-act="queueDecide" data-q="${q.id}" data-type="adopt" data-id="${q.cands[0][0]}">確認第一名：${esc(spName(q.cands[0][0]))}</button>
+      <button class="btn ghost block" data-act="queueDecide" data-q="${q.id}" data-type="expert">不確定，交給專家</button>
+      <button class="btn ghost block" data-act="queueDecide" data-q="${q.id}" data-type="notfrog">這不是蛙</button>
+    </div>
+  </section>`;
+}
+
+/* ----- 更多 ----- */
+VIEWS.more = () => `<section class="stack">
+  <h1>更多</h1>
+  <ul class="menu">
+    <li><a href="#diagnostics"><strong>錄音診斷與實測</strong><span>檢查 LINE 裡的麥克風；濕地實測錄音的保存與上傳</span></a></li>
+    <li><a href="#entry"><strong>LINE 入口示意</strong><span>官方帳號的圖文選單、推播與回覆</span></a></li>
+    <li><a href="#prefs"><strong>原型設定</strong><span>切換辨識情境、先聽先猜、主題</span></a></li>
+    <li><a href="#about"><strong>關於這個原型</strong><span>哪些是真的、哪些是模擬</span></a></li>
+  </ul>
+  <div class="panel"><p class="eyebrow">專業監測</p><p class="small">PAM 長時錄音上傳、批次分析與報告匯出，規劃做成獨立的網頁後台，不放在 LINE 裡。這個原型沒有包含。</p></div>
+  <div class="panel"><p class="eyebrow">帳號</p><p class="small">${S.user ? (S.user.method === 'line' ? 'LINE' : 'Email') + ' 登入・代碼 •••' + esc(S.user.tail) + (S.user.simulated ? '（模擬）' : '') : '未登入'}</p><div><button class="btn ghost sm" data-act="logout">登出</button></div></div>
+</section>`;
+
+/* ----- 錄音診斷 ----- */
+function mrTypes() {
+  const t = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/aac', 'audio/ogg;codecs=opus', 'audio/wav'].filter(x => { try { return MediaRecorder.isTypeSupported(x); } catch (e) { return false; } });
+  return t.length ? t.join('、') : '支援，但沒有回報格式';
+}
+function envRows() {
+  const rows = [
+    ['裝置', ENV.ios ? 'iOS' : ENV.android ? 'Android' : '電腦'],
+    ['瀏覽環境', envLabel()],
+    ['HTTPS 安全環境', ENV.secure ? '是' : '否（不能用麥克風）'],
+    ['麥克風 API', ENV.gum ? '有' : '沒有'],
+    ['AudioWorklet', ENV.worklet ? '支援' : '不支援，改用 ScriptProcessor'],
+    ['MediaRecorder 格式', ENV.mr ? mrTypes() : '不支援'],
+    ['音訊取樣率', AudioEng.ctx ? AudioEng.ctx.sampleRate + ' Hz' : '開啟麥克風後顯示'],
+    ['LIFF', LIFF.enabled ? (LIFF.inClient() ? '在 LINE 內執行' : '已載入，在外部瀏覽器') : (S.liffError ? '載入失敗：' + S.liffError : '尚未設定 LIFF ID')]
+  ];
+  return rows.map(kv => '<dt>' + esc(kv[0]) + '</dt><dd>' + esc(kv[1]) + '</dd>').join('');
+}
+function constraintTable(sess) {
+  const s = sess.settings || {};
+  const row = (k, label) => {
+    const v = s[k], judge = v === false ? '<span class="pill ok">已關閉</span>' : v === true ? '<span class="pill diff">仍開啟</span>' : '<span class="pill">未回報</span>';
+    return '<tr><td>' + label + '</td><td class="data">false</td><td class="data">' + (v === undefined ? '—' : esc(String(v))) + '</td><td>' + judge + '</td></tr>';
+  };
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>處理</th><th>要求</th><th>實際</th><th>判斷</th></tr></thead><tbody>
+    ${row('echoCancellation', '回音消除')}${row('noiseSuppression', '降噪')}${row('autoGainControl', '自動增益')}
+    <tr><td>聲道數</td><td class="data">1</td><td class="data">${s.channelCount != null ? esc(String(s.channelCount)) : '—'}</td><td></td></tr>
+    <tr><td>取樣率</td><td class="data">—</td><td class="data">${esc(String(s.sampleRate || sess.sampleRate))} Hz</td><td></td></tr>
+    <tr><td>擷取方式</td><td class="data">—</td><td class="data">${esc(sess.mode)}</td><td></td></tr>
+  </tbody></table></div>
+  <p class="small muted">「未回報」表示這個瀏覽環境不提供這項設定的狀態，要用下面的頻寬與底噪來判斷。${sess.label ? '麥克風：' + esc(sess.label) + '。' : ''}</p>`;
+}
+function micBoxHtml() {
+  const d = S.diag;
+  if (d.session) return constraintTable(d.session);
+  return (d.error ? '<div class="callout diff"><strong>麥克風沒有開啟</strong><span>' + esc(d.error) + '</span></div>' : '') + '<button class="btn block" data-act="diagOpen">開啟麥克風（關閉人聲處理）</button>';
+}
+function specSvg(m) {
+  if (!m.frames) return '<p class="small muted">錄音太短，無法計算頻譜。</p>';
+  const W = 360, H = 172, L = 36, R = 10, T = 18, B = 24, pw = W - L - R, ph = H - T - B, nyq = m.nyquist;
+  const x = f => L + f / nyq * pw, y = d => T + clamp(-d, 0, 90) / 90 * ph;
+  const pts = m.spec.map((d, i) => x((i + 0.5) / m.spec.length * nyq).toFixed(1) + ',' + y(d).toFixed(1)).join(' ');
+  const stepK = nyq > 16000 ? 4 : 2; let g = '';
+  for (let k = 0; k * 1000 <= nyq; k += stepK) g += '<line class="gl" x1="' + x(k * 1000).toFixed(1) + '" x2="' + x(k * 1000).toFixed(1) + '" y1="' + T + '" y2="' + (T + ph) + '"/><text class="ax" x="' + x(k * 1000).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + k + '</text>';
+  [0, -30, -60, -90].forEach(d => { g += '<line class="gl" x1="' + L + '" x2="' + (L + pw) + '" y1="' + y(d) + '" y2="' + y(d) + '"/><text class="ax" x="' + (L - 5) + '" y="' + (y(d) + 4) + '" text-anchor="end">' + d + '</text>'; });
+  const mk = (f, lab, ly) => (f > 0 ? '<line class="mk" x1="' + x(f).toFixed(1) + '" x2="' + x(f).toFixed(1) + '" y1="' + T + '" y2="' + (T + ph) + '"/><text class="ax mkt" x="' + clamp(x(f), L + 18, L + pw - 18).toFixed(1) + '" y="' + ly + '" text-anchor="middle">' + lab + '</text>' : '');
+  return '<figure class="specplot"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="平均頻譜">' + g + '<polyline class="ln" points="' + pts + '"/>' + mk(m.bw99, '99%', T - 6) + mk(m.roll60, '−60 dB', T + 12) + '</svg><figcaption class="small muted">平均頻譜：橫軸 kHz，縱軸是相對最大值的 dB。如果在 8 kHz 附近突然掉下去，可能是系統做了濾波。</figcaption></figure>';
+}
+function resultBlock(m, label) {
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1), kHz = v => (v / 1000).toFixed(1) + ' kHz';
+  const rate = m.origRate ? m.origRate + ' Hz（原始檔案）' : m.decoded ? '解碼為 ' + m.sampleRate + ' Hz（原始取樣率未知）' : m.sampleRate + ' Hz（上限 ' + kHz(m.nyquist) + '）';
+  return `<div class="panel">
+    <p class="eyebrow">${esc(label)}</p>
+    <dl class="kv">
+      <dt>長度</dt><dd>${f1(m.duration)} 秒</dd>
+      <dt>取樣率</dt><dd>${esc(rate)}</dd>
+      <dt>峰值</dt><dd>${f1(m.peakDb)} dBFS</dd>
+      <dt>平均音量（RMS）</dt><dd>${f1(m.rmsDb)} dBFS</dd>
+      <dt>削波</dt><dd>${m.clipPct.toFixed(2)}%</dd>
+      <dt>底噪（10% 分位）</dt><dd>${f1(m.floorDb)} dBFS</dd>
+      <dt>訊噪差（95% 減 10%）</dt><dd>${f1(m.snrDb)} dB</dd>
+      <dt>99% 能量頻寬</dt><dd>${kHz(m.bw99)}</dd>
+      <dt>−60 dB 截止</dt><dd>${kHz(m.roll60)}</dd>
+      <dt>4 kHz 以上能量</dt><dd>${m.hf4.toFixed(1)}%</dd>
+      <dt>8 kHz 以上能量</dt><dd>${m.hf8.toFixed(1)}%</dd>
+    </dl>
+    ${specSvg(m)}
+  </div>`;
+}
+function canShareFiles() { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(4)], 't.wav', { type: 'audio/wav' })] })); } catch (e) { return false; } }
+function diagResultHtml() {
+  return resultBlock(S.diag.result, '這台裝置的麥克風・' + envLabel()) +
+    '<div class="row">' + (!inFrame ? '<button class="btn ghost grow" data-act="diagDownload">下載 WAV</button>' : '') +
+    (canShareFiles() ? '<button class="btn ghost grow" data-act="diagShare">分享 WAV</button>' : '') +
+    '<button class="btn ghost grow" data-act="diagCopy">複製診斷摘要</button></div>' +
+    '<p class="small muted">' + (LIFF.inClient() || ENV.line ? 'LINE 裡不能直接下載檔案：實測錄音請用下面的「存起來」上傳，或用「分享」。' : '如果在 LINE 裡無法下載，請用下面的「存起來」上傳，或用「分享」。') + '</p><div id="copyBox"></div>' +
+    '<div id="fieldForm">' + fieldFormHtml() + '</div>';
+}
+VIEWS.diagnostics = () => {
+  const d = S.diag;
+  return `<section class="stack">
+    <a class="btn quiet back" href="#more">${IC.back}更多</a>
+    <h1>錄音診斷與實測</h1>
+    <p class="muted">在 LINE 裡打開這一頁，檢查關掉人聲處理之後的麥克風設定、取樣率與頻寬；到濕地實測時，每錄一段就存起來，有訊號時上傳給泰元老師比對。</p>
+    <h2>瀏覽環境</h2>
+    <dl class="kv wide" id="envKv">${envRows()}</dl>
+    <details class="box"><summary>使用者代理字串</summary><pre class="code">${esc(navigator.userAgent)}</pre></details>
+    <h2>麥克風</h2>
+    <div id="micBox">${micBoxHtml()}</div>
+    <div class="scope tall"><canvas id="dSpec"></canvas><span class="scope-tag">即時頻譜</span><div class="axis" id="dAx"></div></div>
+    <div class="levelbar"><div class="bar"><i id="lvl"></i></div><span class="data small" id="lvlTxt">— dBFS</span></div>
+    <div class="row"><button class="btn grow" id="diagRecBtn" data-act="diagRec" ${d.session ? '' : 'disabled'}>錄 ${REC_SECONDS} 秒</button><span class="data small" id="diagCd"></span></div>
+    <div id="diagResult">${d.result ? diagResultHtml() : ''}</div>
+    <h2>實測錄音</h2>
+    <p class="small muted">錄音先存在這支手機上；有訊號時上傳到計畫的雲端硬碟，給泰元老師比對辨識結果。</p>
+    <div class="stack tight" id="fieldBox"><p class="small muted">讀取中…</p></div>
+    <details class="box"><summary>會上傳哪些資料</summary><p class="small">錄音檔、配對編號、場域、備註、錄音時間（只到小時）、手機與瀏覽環境、麥克風設定與分析數值。不會上傳 LINE 帳號、名字或位置。資料只給研究團隊比對辨識結果用。</p></details>
+    <h2>分析其他音檔</h2>
+    <p class="small muted">也可以選現在 App 或其他裝置的錄音檔，用同樣的方法比較頻寬與底噪（只在這支手機上分析，不會上傳）。</p>
+    <div><label class="btn ghost" for="diagFile">選擇音檔</label><input id="diagFile" class="vh" type="file" accept="audio/*,.wav,.m4a,.mp3,.aac"></div>
+    <div id="fileResult">${d.fileResult ? resultBlock(d.fileResult, '上傳的音檔：' + d.fileName) : ''}</div>
+    <h2>實測步驟</h2>
+    <ol class="steps">
+      <li>用計畫給的測試連結打開這一頁（在 LINE 裡點連結），連結裡帶有上傳設定。</li>
+      <li>開啟麥克風，確認回音消除、降噪、自動增益顯示「已關閉」或「未回報」。</li>
+      <li>先在安靜的室內錄一段，場域選「室內測試」，存起來，確認可以上傳。</li>
+      <li>用另一支手機播放 1、4、8、12 kHz 的測試音，看頻譜和「−60 dB 截止」有沒有跟著出現。</li>
+      <li>到濕地，在同一個位置先用現在的 App 錄一段、記下 App 給的結果，再用這一頁錄 ${REC_SECONDS} 秒；兩段用同一個配對編號，App 的結果寫在備註。</li>
+      <li>每個場域錄 20 到 30 對；沒有訊號就先存著，回到有訊號的地方按「上傳全部」。</li>
+    </ol>
+  </section>`;
+};
+AFTER.diagnostics = () => {
+  const cv = $('#dSpec'); sizeCanvas(cv); clearScope(cv);
+  if (S.diag.session) diagStartLoop();
+  fieldRenderQueue().then(fieldAutoUpload);
+  onCleanup(() => {
+    cancelAnimationFrame(S.diag.raf); clearInterval(S.diag.iv); S.diag.running = false;
+    if (S.diag.session) { S.diag.session.close(); S.diag.session = null; }
+  });
+};
+async function diagOpen() {
+  const box = $('#micBox');
+  if (!(ENV.gum && ENV.secure)) { S.diag.error = micReason() || '這個瀏覽環境不能使用麥克風。'; box.innerHTML = micBoxHtml(); return; }
+  AudioEng.ensure();
+  let sess;
+  try { sess = await openMicSession(); }
+  catch (e) {
+    S.diag.error = '麥克風無法開啟（' + ((e && e.name) || '錯誤') + '）。' + (inFrame ? '這個預覽環境不開放麥克風，請用 GitHub Pages 的版本在手機上測。' : '請到系統設定確認 LINE 或瀏覽器的麥克風權限。');
+    if (route() === 'diagnostics') $('#micBox').innerHTML = micBoxHtml();
+    return;
+  }
+  if (route() !== 'diagnostics') { sess.close(); return; }
+  S.diag.session = sess; S.diag.error = ''; S.micState = 'ok';
+  box.innerHTML = micBoxHtml(); $('#diagRecBtn').disabled = false; $('#envKv').innerHTML = envRows();
+  diagStartLoop();
+}
+function diagStartLoop() {
+  const sess = S.diag.session; if (!sess) return;
+  const cv = $('#dSpec'); sizeCanvas(cv); clearScope(cv); specAxis($('#dAx'), sess.sampleRate / 2);
+  const an = sess.analyser, draw = makeSpecDrawer(cv, an), f32 = new Float32Array(an.fftSize), u8 = new Uint8Array(an.fftSize), lvl = $('#lvl'), txt = $('#lvlTxt');
+  let frame = 0;
+  const loop = () => {
+    draw();
+    if ((frame++ & 3) === 0) {
+      const x = readTime(an, f32, u8); let pk = 0, s = 0;
+      for (let i = 0; i < x.length; i++) { const a = Math.abs(x[i]); if (a > pk) pk = a; s += x[i] * x[i]; }
+      const rdb = 20 * Math.log10(Math.max(Math.sqrt(s / x.length), 1e-9)), pdb = 20 * Math.log10(Math.max(pk, 1e-9));
+      lvl.style.width = clamp((rdb + 90) / 90 * 100, 0, 100) + '%';
+      txt.textContent = 'RMS ' + rdb.toFixed(1) + '／峰值 ' + pdb.toFixed(1) + ' dBFS';
+    }
+    S.diag.raf = requestAnimationFrame(loop);
+  };
+  cancelAnimationFrame(S.diag.raf); S.diag.raf = requestAnimationFrame(loop);
+}
+function diagRec() {
+  const sess = S.diag.session; if (!sess || S.diag.running) return;
+  S.diag.running = true;
+  const btn = $('#diagRecBtn'), cd = $('#diagCd'), t0 = performance.now();
+  btn.disabled = true; sess.start();
+  S.diag.iv = setInterval(() => {
+    const left = REC_SECONDS - (performance.now() - t0) / 1000;
+    cd.textContent = left > 0 ? '錄音中 ' + Math.ceil(left) + ' 秒' : '';
+    if (left > 0) return;
+    clearInterval(S.diag.iv); S.diag.running = false; btn.disabled = false;
+    const x = sess.stopCapture();
+    if (x.length < sess.sampleRate * 0.5) { toast('沒有錄到聲音，請再試一次。'); return; }
+    S.diag.raw = { samples: x, sr: sess.sampleRate }; S.diag.result = analyzeSamples(x, sess.sampleRate); S.diag.savedId = null;
+    $('#diagResult').innerHTML = diagResultHtml();
+  }, 150);
+}
+async function handleDiagFile(file) {
+  try {
+    const d = await decodeFile(file), m = analyzeSamples(mixdown(d.ab), d.ab.sampleRate);
+    m.decoded = true; m.origRate = d.origRate; S.diag.fileResult = m; S.diag.fileName = file.name;
+    $('#fileResult').innerHTML = resultBlock(m, '上傳的音檔：' + file.name);
+  } catch (e) { toast('這個音檔無法讀取。'); }
+}
+function testFileName() {
+  const d = new Date(), env = LIFF.inClient() ? 'liff' : ENV.line ? 'line' : 'browser', dev = ENV.ios ? 'ios' : ENV.android ? 'android' : 'desktop';
+  return 'ifrog-test-' + dev + '-' + env + '-' + Math.round(S.diag.raw.sr) + 'Hz-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.wav';
+}
+function diagSummary() {
+  const m = S.diag.result, s = S.diag.session, st = {};
+  if (s && s.settings) Object.keys(s.settings).forEach(k => { if (k !== 'deviceId' && k !== 'groupId') st[k] = s.settings[k]; });
+  const r1 = v => Math.round(v * 10) / 10;
+  return JSON.stringify({
+    app: APP_VER, testedAt: stamp().iso,
+    device: ENV.ios ? 'iOS' : ENV.android ? 'Android' : 'desktop', environment: envLabel(), userAgent: navigator.userAgent,
+    captureMode: s ? s.mode : null, trackSettings: s ? st : null,
+    metrics: m ? { durationSec: r1(m.duration), sampleRate: m.sampleRate, peakDbfs: r1(m.peakDb), rmsDbfs: r1(m.rmsDb), clipPct: Math.round(m.clipPct * 1000) / 1000, noiseFloorDbfs: r1(m.floorDb), snrDb: r1(m.snrDb), bandwidth99Hz: Math.round(m.bw99), rolloff60Hz: Math.round(m.roll60), above4kPct: r1(m.hf4), above8kPct: r1(m.hf8) } : null
+  }, null, 2);
+}
+/* DL:BEGIN */
+function diagDownload() {
+  const r = S.diag.raw; if (!r) return;
+  const url = URL.createObjectURL(encodeWav(r.samples, r.sr)), a = document.createElement('a');
+  a.href = url; a.download = testFileName(); document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 4000);
+}
+/* DL:END */
+async function diagShare() {
+  const r = S.diag.raw; if (!r) return;
+  try { await navigator.share({ files: [new File([encodeWav(r.samples, r.sr)], testFileName(), { type: 'audio/wav' })], title: '蛙抵家錄音測試' }); }
+  catch (e) { if (!e || e.name !== 'AbortError') toast('這個環境不能分享檔案，請改用複製摘要。'); }
+}
+async function diagCopy() {
+  const txt = diagSummary();
+  try { await navigator.clipboard.writeText(txt); toast('已複製診斷摘要'); }
+  catch (e) {
+    const box = $('#copyBox'); if (!box) return;
+    box.innerHTML = '<p class="small muted">這個環境不能自動複製，請長按下面的文字全選後複製。</p><textarea class="copy" id="copyTa" readonly></textarea>';
+    const ta = $('#copyTa'); ta.value = txt; ta.focus(); ta.select();
+  }
+}
+/* ----- 階段 0 實測錄音：先存在手機（IndexedDB），有訊號時上傳到 Apps Script ----- */
+const FIELD_SITES = ['新海人工濕地', '華江人工濕地', '室內測試', '其他（寫在備註）'];
+const FieldDB = {
+  db: null, ok: null, mem: new Map(),
+  open() {
+    if (this.ok !== null) return Promise.resolve(this.ok);
+    return new Promise(res => {
+      const done = v => { if (this.ok === null) { this.ok = v; res(v); } };
+      try {
+        const rq = indexedDB.open('identifrog2-proto', 1);
+        rq.onupgradeneeded = () => { const db = rq.result; if (!db.objectStoreNames.contains('tests')) db.createObjectStore('tests', { keyPath: 'id' }); };
+        rq.onsuccess = () => { this.db = rq.result; done(true); };
+        rq.onerror = () => done(false);
+        rq.onblocked = () => done(false);
+      } catch (e) { done(false); }
+    });
+  },
+  async run(mode, make) {
+    if (!(await this.open())) return null;
+    return new Promise((res, rej) => {
+      try {
+        const t = this.db.transaction('tests', mode), rq = make(t.objectStore('tests'));
+        t.oncomplete = () => res(rq ? rq.result : undefined);
+        t.onerror = () => rej(t.error || new Error('IndexedDB'));
+        t.onabort = () => rej(t.error || new Error('IndexedDB'));
+      } catch (e) { rej(e); }
+    });
+  },
+  async all() {
+    let v = null; try { v = await this.run('readonly', s => s.getAll()); } catch (e) { v = null; }
+    const list = (v || []).slice(), ids = {}; list.forEach(r => { ids[r.id] = 1; });
+    this.mem.forEach(r => { if (!ids[r.id]) list.push(r); });
+    return list.sort((a, b) => a.createdAt - b.createdAt);
+  },
+  async put(rec) {
+    let r = null; try { r = await this.run('readwrite', s => s.put(rec)); } catch (e) { r = null; }
+    if (r === null) this.mem.set(rec.id, rec); else this.mem.delete(rec.id);
+  },
+  async del(id) { try { await this.run('readwrite', s => s.delete(id)); } catch (e) { /* 忽略 */ } this.mem.delete(id); }
+};
+let fieldBusy = false;
+const hourLabel = h => { const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})/.exec(h || ''); return m ? (+m[2]) + '/' + (+m[3]) + ' ' + (+m[4]) + ' 時' : ''; };
+const siteShort = s => (s === '室內測試' ? '室內' : s.indexOf('其他') === 0 ? '其他' : s.slice(0, 2));
+function nextPairId(prev, site) {
+  if (!prev) return siteShort(site) + '-01';
+  const m = /^(.*?)(\d+)$/.exec(prev); if (!m) return prev;
+  let n = String(parseInt(m[2], 10) + 1); while (n.length < m[2].length) n = '0' + n;
+  return m[1] + n;
+}
+function fieldFormHtml() {
+  const d = S.diag;
+  if (d.savedId) return '<div class="callout info"><strong>已存成實測錄音：' + esc(d.savedLabel) + '</strong><span>要錄下一段，按上面的「錄 ' + REC_SECONDS + ' 秒」。</span></div>';
+  const site = store.get('fieldSite', FIELD_SITES[0]);
+  return `<div class="panel">
+    <p class="eyebrow">存成實測錄音</p>
+    <label class="field"><span>配對編號（和現在 App 錄的那段用同一個）</span><input class="text" id="fPair" autocomplete="off" maxlength="40" value="${esc(nextPairId(store.get('fieldPair', ''), site))}"></label>
+    <label class="field"><span>場域</span><select class="text" id="fSite">${FIELD_SITES.map(s => '<option' + (s === site ? ' selected' : '') + '>' + esc(s) + '</option>').join('')}</select></label>
+    <label class="field"><span>備註（選填）</span><input class="text" id="fNote" autocomplete="off" maxlength="200" placeholder="例：App 顯示澤蛙；風很大"></label>
+    <button class="btn block" data-act="fieldSave">${UPLOAD.ready() ? '存起來並上傳' : '存起來'}</button>
+  </div>`;
+}
+function fieldQueueHtml(list) {
+  const pend = list.filter(r => r.status !== 'done').length, done = list.length - pend;
+  const pill = r => (r.status === 'done' ? '<span class="pill ok">已上傳</span>' : r.status === 'uploading' ? '<span class="pill info">上傳中</span>' : r.status === 'failed' ? '<span class="pill diff">沒傳成功</span>' : '<span class="pill wait">待上傳</span>');
+  const items = list.slice().reverse().map(r => '<li><span class="who"><span class="data">' + esc(r.pairId) + '</span><span class="small muted">' + esc(r.site) + '・' + esc(hourLabel(r.hour)) + (r.status === 'failed' && r.error ? '・' + esc(r.error) : '') + '</span></span><span class="row tight">' + pill(r) + (r.status !== 'done' ? '<button class="btn quiet sm" data-act="fieldDel" data-id="' + esc(r.id) + '">刪除</button>' : '') + '</span></li>').join('');
+  return '<div class="row between"><span class="small muted" id="fieldCount">已上傳 ' + done + ' 段・待上傳 ' + pend + ' 段</span>' + (UPLOAD.ready() ? '<span class="pill ok">上傳位置已設定</span>' : '<span class="pill wait">還沒設定上傳位置</span>') + '</div>' +
+    (list.length ? '<ul class="flist">' + items + '</ul>' : '<p class="small muted">還沒有實測錄音。錄完一段，在結果下面填配對編號，按「存起來」。</p>') +
+    (pend ? '<button class="btn block" data-act="fieldUploadAll"' + (UPLOAD.ready() && !fieldBusy ? '' : ' disabled') + '>' + (fieldBusy ? '上傳中…' : '上傳全部（' + pend + ' 段）') + '</button>' : '') +
+    (UPLOAD.ready() ? '' : '<p class="small muted">請用計畫給的測試連結打開這一頁，連結裡帶有上傳設定；在那之前，錄音會先存在這支手機上。</p>') +
+    (FieldDB.ok === false ? '<div class="callout diff"><strong>這個環境不能把錄音存在手機上</strong><span>關掉這一頁，還沒上傳的錄音就會不見，請在有訊號時盡快上傳。</span></div>' : '');
+}
+async function fieldRenderQueue() {
+  if (!$('#fieldBox')) return;
+  const list = await FieldDB.all(), box = $('#fieldBox');
+  if (box) box.innerHTML = fieldQueueHtml(list);
+}
+async function fieldSave() {
+  const d = S.diag, r = d.raw, m = d.result; if (!r || !m || d.savedId) return;
+  const pairEl = $('#fPair'), pair = (pairEl.value || '').trim().slice(0, 40), site = $('#fSite').value, note = ($('#fNote').value || '').trim().slice(0, 200);
+  if (!pair) { toast('請填配對編號'); pairEl.focus(); return; }
+  const seq = store.get('fieldSeq', 0) + 1, id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10), hour = stamp().iso;
+  const st = (d.session && d.session.settings) || {}, onoff = v => (v === true ? '開啟' : v === false ? '關閉' : '未回報'), r1 = v => Math.round(v * 10) / 10;
+  const dev = ENV.ios ? 'ios' : ENV.android ? 'android' : 'desktop', env = LIFF.inClient() ? 'liff' : ENV.line ? 'line' : 'browser';
+  const rec = {
+    id: id, seq: seq, createdAt: Date.now(), hour: hour, pairId: pair, site: site, note: note, status: 'pending', error: '',
+    fileName: pair.replace(/[\\/:*?"<>|\s]+/g, '_') + '_' + dev + '_' + env + '_' + Math.round(r.sr) + 'Hz_' + id.slice(-4) + '.wav',
+    wav: encodeWavBuffer(r.samples, r.sr), summary: diagSummary(),
+    meta: { pairId: pair, site: site, note: note, hour: hour, seq: seq, device: ENV.ios ? 'iOS' : ENV.android ? 'Android' : '電腦', environment: envLabel(), sampleRate: m.sampleRate, durationSec: r1(m.duration), echoCancellation: onoff(st.echoCancellation), noiseSuppression: onoff(st.noiseSuppression), autoGainControl: onoff(st.autoGainControl), noiseFloorDbfs: r1(m.floorDb), snrDb: r1(m.snrDb), bandwidth99Hz: Math.round(m.bw99), rolloff60Hz: Math.round(m.roll60), app: APP_VER }
+  };
+  await FieldDB.put(rec);
+  store.set('fieldSeq', seq); store.set('fieldPair', pair); store.set('fieldSite', site);
+  d.savedId = id; d.savedLabel = pair + '（這支手機的第 ' + seq + ' 段）';
+  const f = $('#fieldForm'); if (f) f.innerHTML = fieldFormHtml();
+  await fieldRenderQueue();
+  if (UPLOAD.ready() && navigator.onLine !== false) fieldUploadAll(true);
+  else toast(UPLOAD.ready() ? '已存在手機上，有訊號時再按「上傳全部」' : '已存在手機上');
+}
+function abToB64(ab) {
+  const u = new Uint8Array(ab); let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+async function fieldUploadOne(rec) {
+  const mine = msg => { const e = new Error(msg); e.mine = true; return e; };
+  if (!rec.wav) throw mine('找不到錄音檔');
+  const body = JSON.stringify({ v: 1, key: UPLOAD.key(), id: rec.id, fileName: rec.fileName, data: abToB64(rec.wav), meta: rec.meta, summary: rec.summary });
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), 90000) : 0;
+  try {
+    // text/plain 不會觸發 CORS 預檢；Apps Script 收到後會轉址到 googleusercontent 回傳結果
+    const res = await fetch(UPLOAD.url(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow', signal: ctl ? ctl.signal : undefined });
+    const txt = await res.text();
+    let j = null; try { j = JSON.parse(txt); } catch (e) { j = null; }
+    if (!j) throw mine('上傳位置的回應不對（' + res.status + '）');
+    if (!j.ok) throw mine(j.error === 'key' ? '上傳金鑰不對' : j.error === 'setup' ? '上傳端點還沒執行 setup' : '上傳位置拒收（' + j.error + '）');
+    return j;
+  } catch (e) {
+    if (e && e.mine) throw e;
+    throw mine(e && e.name === 'AbortError' ? '等太久沒有回應' : '連不上上傳位置');
+  } finally { clearTimeout(timer); }
+}
+async function fieldUploadAll(silent) {
+  if (fieldBusy) return;
+  if (!UPLOAD.ready()) { if (!silent) toast('還沒設定上傳位置：請用計畫給的測試連結打開這一頁。'); return; }
+  const list = (await FieldDB.all()).filter(r => r.status !== 'done');
+  if (!list.length) { if (!silent) toast('沒有待上傳的錄音'); return; }
+  fieldBusy = true; let ok = 0, ng = 0, msg = '';
+  try {
+    for (const rec of list) {
+      rec.status = 'uploading'; await FieldDB.put(rec); await fieldRenderQueue();
+      try { await fieldUploadOne(rec); rec.status = 'done'; rec.error = ''; rec.uploadedAt = Date.now(); delete rec.wav; ok++; }
+      catch (e) { rec.status = 'failed'; rec.error = (e && e.message) || '上傳失敗'; msg = rec.error; ng++; }
+      await FieldDB.put(rec);
+      if (rec.status === 'failed') break;
+    }
+  } finally { fieldBusy = false; await fieldRenderQueue(); }
+  toast(ng ? '上傳停在一半：' + msg + '。錄音還在手機上，可以再按「上傳全部」。' : '已上傳 ' + ok + ' 段');
+}
+async function fieldAutoUpload() {
+  if (fieldBusy || !UPLOAD.ready() || navigator.onLine === false) return;
+  const list = await FieldDB.all();
+  if (list.some(r => r.status !== 'done')) fieldUploadAll(true);
+}
+async function fieldDel(el) {
+  if (fieldBusy) { toast('上傳中，等一下再刪除'); return; }
+  if (el.dataset.armed !== '1') {
+    el.dataset.armed = '1'; el.textContent = '確定刪除？';
+    setTimeout(() => { if (el.isConnected && el.dataset.armed === '1') { el.dataset.armed = ''; el.textContent = '刪除'; } }, 3000);
+    return;
+  }
+  const id = el.dataset.id; await FieldDB.del(id);
+  if (S.diag.savedId === id) { S.diag.savedId = null; const f = $('#fieldForm'); if (f) f.innerHTML = fieldFormHtml(); }
+  await fieldRenderQueue(); toast('已刪除');
+}
+
+/* ----- LINE 入口示意 ----- */
+VIEWS.entry = () => {
+  const tiles = [['go', 'record', IC.mic, '錄音辨識'], ['go', 'records', IC.list, '我的紀錄'], ['go', 'tour', IC.pin, '導覽'], ['go', 'soundscape', IC.wave, '聲景摘要'], ['toastMsg', '青蛙百科沿用 v1 的內容，不在這個原型裡。', IC.book, '青蛙百科'], ['go', 'about', IC.info, '說明']];
+  return `<section class="stack">
+    <a class="btn quiet back" href="#more">${IC.back}更多</a>
+    <h1>LINE 入口示意</h1>
+    <p class="muted">使用者加入蛙抵家的 LINE 官方帳號，從聊天室下方的圖文選單進入各個功能。點選單或訊息裡的連結，會打開這個原型對應的頁面。</p>
+    <div class="phone">
+      <div class="phone-top"><span class="avatar">${frogSvg('')}</span><span><strong>蛙抵家</strong><br><span class="small muted">官方帳號（示意）</span></span></div>
+      <div class="chat">
+        <div class="bubble"><span>歡迎加入蛙抵家！點下方的「錄音辨識」，就能開始記錄身邊的蛙鳴。</span><span class="pill">加入好友時的歡迎訊息</span></div>
+        <div class="bubble"><span>【本週專家確認】你有 2 筆紀錄已確認：澤蛙 1 筆，和你的判斷一致；白頷樹蛙 1 筆，你原本選的是斑腿樹蛙。</span><button class="open" data-act="go" data-to="records">查看我的紀錄</button><span class="pill wait">推播・計入則數</span></div>
+        <div class="bubble"><span>【昨晚的聲景】新海 A 點：312 筆判讀，6 筆待你審閱。</span><button class="open" data-act="go" data-to="soundscape">打開聲景摘要</button><span class="pill wait">推播・計入則數</span></div>
+        <div class="bubble me"><span>我的紀錄</span></div>
+        <div class="bubble"><span>你有 1 筆紀錄等待專家確認，2 筆已經確認。</span><span class="pill ok">回覆・不計費</span></div>
+      </div>
+      <div class="richmenu" role="group" aria-label="圖文選單（示意）">${tiles.map(t => '<button class="rm" data-act="' + t[0] + '" ' + (t[0] === 'go' ? 'data-to="' + t[1] + '"' : 'data-msg="' + esc(t[1]) + '"') + '>' + t[2] + '<span>' + t[3] + '</span></button>').join('')}</div>
+    </div>
+    <p class="small muted">示意圖，不是 LINE 的實際畫面。依第三方整理，LINE 官方帳號 2026/11/1 起：輕用量免費 200 則；中用量月費 1,000 元含 3,000 則；高用量 1,400 元含 6,000 則（未稅），以 LINE 正式公告為準。推播計入則數；使用者傳訊之後的回覆、點選單打開頁面，都不計費。</p>
+  </section>`;
+};
+
+/* ----- 原型設定、關於 ----- */
+VIEWS.prefs = () => {
+  const st = S.settings;
+  const radio = (name, val, cur, title, sub) => '<label><input type="radio" name="' + name + '" value="' + val + '" ' + (cur === val ? 'checked' : '') + '><span class="opt"><span>' + title + '</span>' + (sub ? '<span class="small muted">' + sub + '</span>' : '') + '</span></label>';
+  const dl = st.delayReveal ? 'on' : 'off';
+  return `<section class="stack">
+    <a class="btn quiet back" href="#more">${IC.back}更多</a>
+    <h1>原型設定</h1>
+    <p class="muted">給測試與展示用，正式版不會有這一頁。</p>
+    <fieldset class="seg"><legend>辨識結果情境</legend>
+      ${radio('pref-scenario', 'cycle', st.scenario, '依序輪流', '中等把握 → 高把握 → 低把握 → 無法辨識')}
+      ${radio('pref-scenario', 'high', st.scenario, '高把握', '黑眶蟾蜍')}
+      ${radio('pref-scenario', 'mid', st.scenario, '中等把握（易混淆）', '白頷樹蛙和斑腿樹蛙')}
+      ${radio('pref-scenario', 'low', st.scenario, '低把握', '噪音大、叫聲微弱')}
+      ${radio('pref-scenario', 'none', st.scenario, '無法辨識', '')}
+    </fieldset>
+    <fieldset class="seg"><legend>先聽先猜（延後揭示系統建議）</legend>
+      ${radio('pref-delay', 'on', dl, '開啟', '看結果之前，先請使用者自己判斷')}
+      ${radio('pref-delay', 'off', dl, '關閉', '直接顯示系統建議，作為對照')}
+    </fieldset>
+    <fieldset class="seg"><legend>主題</legend>
+      ${radio('pref-theme', 'default', st.theme, '預設（深色）', '依 Brief：以夜間使用為主')}
+      ${radio('pref-theme', 'light', st.theme, '淺色', '')}
+      ${radio('pref-theme', 'night', st.theme, '夜間自動', '20:00–05:00 深色，其餘時間淺色')}
+    </fieldset>
+    <fieldset class="seg"><legend>環境提示</legend>
+      <label><input type="checkbox" name="pref-breeding" ${st.previewBreeding ? 'checked' : ''}><span class="opt"><span>預覽繁殖季提醒</span><span class="small muted">正式版只在 4–6 月顯示</span></span></label>
+    </fieldset>
+    <div class="panel"><p class="eyebrow">原型資料</p><p class="small">清除這台裝置上的原型紀錄與登入狀態。</p><div id="resetBox"><button class="btn ghost sm" data-act="resetAsk">清除原型資料</button></div></div>
+  </section>`;
+};
+VIEWS.about = () => `<section class="stack">
+  <a class="btn quiet back" href="#more">${IC.back}更多</a>
+  <h1>關於這個原型</h1>
+  <p class="muted">蛙抵家 2.0 原型 v0.2（2026/10/30），依 Brief v1.6 與晶創計畫書子計畫一的審閱設計製作，用來檢驗「WebApp 加 LINE 入口」可不可行。</p>
+  <div class="panel"><p class="eyebrow">真的在運作</p><ul class="reasons"><li>麥克風錄音（關閉回音消除、降噪、自動增益）</li><li>波形與頻譜、裁切、音訊分析</li><li>錄音診斷與 WAV 匯出</li><li>實測錄音的保存與上傳（設定上傳位置之後）</li><li>LINE 登入（填入 LIFF ID 之後）</li></ul></div>
+  <div class="panel"><p class="eyebrow">模擬的</p><ul class="reasons"><li>辨識結果與候選排序</li><li>參考叫聲（合成的示意音，不是真實叫聲）</li><li>物種的區辨重點（待大浪據與專家提供）</li><li>場域內容、聲景摘要、專家確認</li></ul></div>
+  <div class="panel"><p class="eyebrow">不在這個原型裡</p><ul class="reasons"><li>專業監測後台（規劃為獨立網頁，不放在 LINE 裡）</li><li>蛙鳴地圖、青蛙百科</li><li>與大浪據平臺、辨識 API 的串接</li></ul></div>
+  <p class="small muted">原型的辨識紀錄只存在這台裝置的瀏覽器裡，不會上傳；只有在「錄音診斷與實測」頁存起來的實測錄音，會上傳到計畫的雲端硬碟。</p>
+</section>`;
+
+/* ---------- 登入牆（Hard Gate） ---------- */
+function gateHtml() {
+  return `<div class="gate-inner">
+    ${frogSvg('mark')}
+    <div class="stack tight"><h1>蛙抵家</h1><p class="muted">錄下身邊的蛙鳴，一起記錄臺灣的蛙。</p></div>
+    <ul><li>AI 幫你比對叫聲，專家再確認物種</li><li>到濕地，可以打開場域導覽</li><li>你的紀錄會成為臺灣蛙類分布資料的一部分</li></ul>
+    <button class="btn block" data-act="login" data-m="line">用 LINE 帳號登入${LIFF.enabled ? '' : '（原型模擬）'}</button>
+    ${LIFF.inClient() ? '' : '<button class="btn quiet" data-act="login" data-m="email">改用 Email 登入（原型模擬）</button>'}
+    <p class="small muted">只取得 LINE 的使用者識別碼（openid），不取暱稱、頭像與 Email。登入後才能使用；紀錄綁定帳號，換手機也不會遺失。</p>
+    ${S.liffError ? '<p class="small muted">LIFF 載入失敗：' + esc(S.liffError) + '，先用模擬登入。</p>' : ''}
+  </div>`;
+}
+function renderGate() {
+  const g = $('#gate'), app = $('#app');
+  // 錄音診斷與實測是測試工具，不擋登入牆
+  if (S.user || route() === 'diagnostics') { g.hidden = true; g.innerHTML = ''; app.removeAttribute('inert'); app.removeAttribute('aria-hidden'); return; }
+  g.innerHTML = gateHtml(); g.hidden = false; app.setAttribute('inert', ''); app.setAttribute('aria-hidden', 'true');
+}
+function login(method) {
+  if (method === 'line' && LIFF.enabled && !LIFF.loggedIn()) { LIFF.login(); return; }
+  const real = method === 'line' && LIFF.enabled;
+  S.user = { method: method, tail: real ? (LIFF.subjectTail() || '----') : Math.random().toString(16).slice(2, 6), simulated: !real };
+  store.set('user', S.user); renderGate(); render();
+}
+function applyTheme() {
+  const t = S.settings.theme, root = document.documentElement;
+  if (t === 'light') root.setAttribute('data-app-theme', 'light');
+  else if (t === 'night') root.setAttribute('data-app-theme', isNight() ? 'dark' : 'light');
+  else root.removeAttribute('data-app-theme');
+}
+
+/* ---------- 事件 ---------- */
+const ACT = {
+  login: el => login(el.dataset.m),
+  logout: () => { S.user = null; store.set('user', null); renderGate(); },
+  startRec: () => startMic(),
+  startDemo: () => startDemo(),
+  stopRec: () => finishRecording(),
+  cancelFlow: () => cancelFlow(),
+  playTrim: () => playTrim(),
+  skipTrim: () => { const f = S.flow; f.trimA = 0; f.trimB = f.dur; f.step = 'analyzing'; render(); },
+  submitTrim: () => { S.flow.step = 'analyzing'; render(); },
+  playMine: () => playMine(),
+  guess: el => { S.flow.guess = el.dataset.id; S.flow.step = 'result'; render(); },
+  playRef: el => playRef(el.dataset.id),
+  abCompare: () => abCompare(),
+  toggle: el => { const t = document.getElementById(el.dataset.target); if (t) { t.hidden = !t.hidden; el.setAttribute('aria-expanded', String(!t.hidden)); } },
+  decide: el => { const type = el.dataset.type; S.flow.decision = { type: type, species: type === 'expert' ? null : el.dataset.id }; S.flow.step = 'save'; render(); },
+  backToResult: () => { captureSaveForm(); S.flow.step = 'result'; render(); },
+  saveRecord: () => saveRecord(),
+  newRec: () => { S.flow = { step: 'home', presetSite: '' }; render(); },
+  retry: () => { S.flow = { step: 'home', presetSite: S.flow.presetSite || '' }; render(); },
+  openRecord: el => { S.recordOpen = el.dataset.id; go('records'); },
+  closeRecord: () => { S.recordOpen = null; render(); },
+  playRecord: el => { const a = S.audioById[el.dataset.id]; if (a) { stopAll(); AudioEng.play(a.samples.subarray(Math.floor(a.a * a.sr), Math.max(Math.floor(a.a * a.sr) + 1, Math.floor(a.b * a.sr))), a.sr); } },
+  locateOnce: () => locateOnce(),
+  openSite: el => { S.tour.site = el.dataset.id; render(); },
+  closeSite: () => { S.tour.site = null; render(); },
+  quietMode: () => quietMode(),
+  quietExit: () => quietExit(),
+  recordHere: el => { const s = SITES.find(x => x.id === el.dataset.id); S.tour.site = null; S.flow = { step: 'home', presetSite: s ? s.name : '' }; go('record'); },
+  openQueue: el => { S.queueOpen = el.dataset.id; render(); },
+  closeQueue: () => { S.queueOpen = null; render(); },
+  playQueue: el => { const q = QUEUE.find(x => x.id === el.dataset.id), sr = AudioEng.ensure().sampleRate; stopAll(); AudioEng.play(queueClip(q, sr), sr); },
+  queueDecide: el => { S.queueDone[el.dataset.q] = { type: el.dataset.type, species: el.dataset.id || null }; toast('已記下你的審閱'); render(); },
+  diagOpen: () => diagOpen(),
+  diagRec: () => diagRec(),
+  diagDownload: () => diagDownload(),
+  diagShare: () => diagShare(),
+  diagCopy: () => diagCopy(),
+  fieldSave: () => fieldSave(),
+  fieldUploadAll: () => fieldUploadAll(false),
+  fieldDel: el => fieldDel(el),
+  go: el => { S.recordOpen = null; S.tour.site = null; S.queueOpen = null; go(el.dataset.to); },
+  toastMsg: el => toast(el.dataset.msg),
+  resetAsk: () => { $('#resetBox').innerHTML = '<div class="row"><button class="btn sm" data-act="resetDo">確定清除</button><button class="btn ghost sm" data-act="resetCancel">取消</button></div>'; },
+  resetCancel: () => { $('#resetBox').innerHTML = '<button class="btn ghost sm" data-act="resetAsk">清除原型資料</button>'; },
+  resetDo: () => {
+    store.clear(); S.user = null; S.records = seedRecords(); store.set('records', S.records); S.audioById = {}; S.queueDone = {}; S.cycle = 0;
+    S.settings = Object.assign({}, DEFAULT_SETTINGS); applyTheme(); S.flow = { step: 'home', presetSite: '' };
+    toast('已清除原型資料'); renderGate(); render();
+  }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const fn = ACT[el.dataset.act]; if (!fn) return;
+  e.preventDefault(); fn(el, e);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'fileIn' && t.files && t.files[0]) handleFlowFile(t.files[0]);
+  else if (t.id === 'diagFile' && t.files && t.files[0]) handleDiagFile(t.files[0]);
+  else if (t.name === 'tm') { captureSaveForm(); const b = $('#dwcBox'); if (b) b.innerHTML = dwcHtml(draftRecord()); }
+  else if (t.name === 'ssRule') S.ssRule = t.value;
+  else if (t.name === 'pref-scenario') { S.settings.scenario = t.value; saveSettings(); }
+  else if (t.name === 'pref-delay') { S.settings.delayReveal = t.value === 'on'; saveSettings(); }
+  else if (t.name === 'pref-theme') { S.settings.theme = t.value; saveSettings(); applyTheme(); }
+  else if (t.name === 'pref-breeding') { S.settings.previewBreeding = t.checked; saveSettings(); }
+});
+document.addEventListener('input', e => { if (e.target.id === 'siteIn') { captureSaveForm(); const b = $('#dwcBox'); if (b) b.innerHTML = dwcHtml(draftRecord()); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && S.flow.step === 'recording') { finishRecording(); toast('切到背景時，網頁會停止錄音。'); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#quiet').hidden) quietExit(); });
+window.addEventListener('hashchange', render);
+window.addEventListener('online', () => { if (route() === 'diagnostics') fieldAutoUpload(); });
+setInterval(() => { if (S.settings.theme === 'night') applyTheme(); }, 60000);
+
+/* ---------- 啟動 ---------- */
+async function boot() {
+  // LIFF 網址的 # 不一定會保留，所以也接受 ?p=頁面（例如 ?p=diagnostics）
+  try { const p = new URLSearchParams(location.search).get('p'); if (p && ROUTES.indexOf(p) >= 0 && !location.hash) history.replaceState(null, '', location.pathname + location.search + '#' + p); } catch (e) { /* 忽略 */ }
+  applyTheme(); renderGate(); render();
+  try { await LIFF.init(); } catch (e) { S.liffError = (e && e.message) || String(e); }
+  if (!S.user && LIFF.enabled && LIFF.loggedIn()) { S.user = { method: 'line', tail: LIFF.subjectTail() || '----', simulated: false }; store.set('user', S.user); }
+  if (LIFF.enabled || S.liffError) { renderGate(); render(); }
+}
+boot();
+})();
+
+</script>
+</body>
+</html>
