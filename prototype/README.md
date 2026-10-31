@@ -1,0 +1,13 @@
+# 蛙抵家 2.0 原型 v0.2
+
+用來驗證「網頁 App 加 LINE 入口」的原型（階段 0）。`index.html` 是單一檔案，沒有外部程式相依（字型取自 Google Fonts）。
+
+- 錄音診斷與實測頁：`index.html?p=diagnostics`
+- 測試連結參數：
+  - `p=diagnostics`：直接打開錄音診斷與實測頁（LIFF 網址不能帶 #）
+  - `k=<上傳金鑰>`：實測錄音的上傳金鑰，打開一次就記在手機上
+  - `up=<Apps Script 網址>`：上傳位置，原型裡還沒寫入時才需要
+  - `liffId=<LIFF ID>`：LIFF ID，原型裡還沒寫入時才需要
+- 上傳端點：`apps-script/Code.gs`（Google Apps Script，貼進試算表的「擴充功能 → Apps Script」，執行 `setup` 後部署成網頁應用程式）
+
+設定與實測步驟另見文件「蛙抵家 2.0 階段 0：設定與實測步驟」。
