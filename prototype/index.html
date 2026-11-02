@@ -304,7 +304,7 @@ ul.menu span{font-size:var(--fs-sm);color:var(--fg-muted)}
   <header class="appbar">
     <div class="brand">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="12" r="4"/><circle cx="21.5" cy="12" r="4"/><circle cx="10.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="21.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M5.5 19.5c3.2 5 17.8 5 21 0"/></svg>
-      <span class="name">蛙抵家</span><span class="ver">2.0 原型 v0.2</span>
+      <span class="name">蛙抵家</span><span class="ver">2.0 原型 v0.2.1</span>
     </div>
     <span class="env" id="envChip">—</span>
   </header>
@@ -335,13 +335,14 @@ ul.menu span{font-size:var(--fs-sm);color:var(--fg-muted)}
 document.documentElement.lang = 'zh-Hant';
 
 /* =====================================================================
-   蛙抵家 2.0 原型 v0.2（2026/10/30）：加上階段 0 實測錄音的保存與上傳
+   蛙抵家 2.0 原型 v0.2.1（2026/11/02）：示意物種改用 v1 的名稱（布氏樹蛙、周氏樹蛙）
+   v0.2（2026/10/30）：加上階段 0 實測錄音的保存與上傳
    真的在運作：麥克風錄音（關閉回音消除／降噪／自動增益）、波形與頻譜、裁切、音訊分析、WAV 匯出
    模擬：辨識結果、參考叫聲（合成示意音）、場域內容、聲景摘要、專家確認
    ===================================================================== */
 
 /* ---------- 可調整的設定 ---------- */
-const APP_VER = '蛙抵家 2.0 原型 v0.2';
+const APP_VER = '蛙抵家 2.0 原型 v0.2.1';
 // 階段 0 實測錄音的上傳位置：Google Apps Script 網頁應用程式的網址（https://script.google.com/macros/s/…/exec）。
 // 留空時，可以用測試連結帶入：?up=網址&k=上傳金鑰（打開一次之後會記在這支手機上）。金鑰不要寫在這裡。
 const UPLOAD_URL = '';
@@ -416,14 +417,14 @@ const SPECIES = {
   melanostictus: { zh: '黑眶蟾蜍', sci: 'Duttaphrynus melanostictus', status: '原生', call: { type: 'trill', f: 1450, rate: 26, dur: 2.2 } },
   bankorensis: { zh: '盤古蟾蜍', sci: 'Bufo bankorensis', status: '特有種', call: { type: 'notes', f: 820, notes: 4, noteDur: 0.16, gap: 0.3 } },
   limnocharis: { zh: '澤蛙', sci: 'Fejervarya limnocharis', status: '原生', call: { type: 'notes', f: 1750, notes: 6, noteDur: 0.07, gap: 0.12, pulsed: true } },
-  braueri: { zh: '白頷樹蛙', sci: 'Polypedates braueri', status: '原生', call: { type: 'notes', f: 2100, notes: 5, noteDur: 0.05, gap: 0.36 } },
+  braueri: { zh: '布氏樹蛙', sci: 'Polypedates braueri', status: '原生', call: { type: 'notes', f: 2100, notes: 5, noteDur: 0.05, gap: 0.36 } },
   megacephalus: { zh: '斑腿樹蛙', sci: 'Polypedates megacephalus', status: '外來種', call: { type: 'notes', f: 1850, notes: 5, noteDur: 0.06, gap: 0.3 } },
   moltrechti: { zh: '莫氏樹蛙', sci: 'Zhangixalus moltrechti', status: '特有種', call: { type: 'notes', f: 1300, notes: 3, noteDur: 0.2, gap: 0.24, pulsed: true } },
   fissipes: { zh: '小雨蛙', sci: 'Microhyla fissipes', status: '原生', call: { type: 'notes', f: 3100, notes: 8, noteDur: 0.08, gap: 0.06, pulsed: true } },
   chinensis: { zh: '中國樹蟾', sci: 'Hyla chinensis', status: '原生', call: { type: 'notes', f: 2600, notes: 10, noteDur: 0.04, gap: 0.07 } },
   idiootocus: { zh: '面天樹蛙', sci: 'Kurixalus idiootocus', status: '特有種', call: { type: 'notes', f: 3700, notes: 6, noteDur: 0.05, gap: 0.14 } },
   eiffingeri: { zh: '艾氏樹蛙', sci: 'Kurixalus eiffingeri', status: '原生', call: { type: 'notes', f: 2900, notes: 4, noteDur: 0.09, gap: 0.2 } },
-  japonica: { zh: '日本樹蛙', sci: 'Buergeria japonica', status: '原生', call: { type: 'notes', f: 4200, notes: 7, noteDur: 0.05, gap: 0.09 } },
+  choui: { zh: '周氏樹蛙', sci: 'Buergeria choui', status: '原生', call: { type: 'notes', f: 4200, notes: 7, noteDur: 0.05, gap: 0.09 } },
   robusta: { zh: '褐樹蛙', sci: 'Buergeria robusta', status: '特有種', call: { type: 'notes', f: 2400, notes: 3, noteDur: 0.14, gap: 0.3 } },
   guentheri: { zh: '貢德氏赤蛙', sci: 'Sylvirana guentheri', status: '原生', call: { type: 'notes', f: 700, notes: 2, noteDur: 0.24, gap: 0.34 } },
   latouchii: { zh: '拉都希氏赤蛙', sci: 'Hylarana latouchii', status: '原生', call: { type: 'notes', f: 2000, notes: 5, noteDur: 0.05, gap: 0.11 } },
@@ -431,8 +432,8 @@ const SPECIES = {
 };
 const SCENARIOS = {
   high: { level: 3, noise: '低', cands: [['melanostictus', 3], ['bankorensis', 1], ['limnocharis', 1]], hidden: ['chinensis', 'fissipes', 'guentheri', 'latouchii'] },
-  mid: { level: 2, noise: '中', cands: [['braueri', 2], ['megacephalus', 2], ['moltrechti', 1]], hidden: ['idiootocus', 'eiffingeri', 'japonica', 'robusta'], confusable: ['braueri', 'megacephalus'] },
-  low: { level: 1, noise: '高', cands: [['fissipes', 1], ['limnocharis', 1], ['chinensis', 1]], hidden: ['latouchii', 'japonica', 'idiootocus', 'eiffingeri'] },
+  mid: { level: 2, noise: '中', cands: [['braueri', 2], ['megacephalus', 2], ['moltrechti', 1]], hidden: ['idiootocus', 'eiffingeri', 'choui', 'robusta'], confusable: ['braueri', 'megacephalus'] },
+  low: { level: 1, noise: '高', cands: [['fissipes', 1], ['limnocharis', 1], ['chinensis', 1]], hidden: ['latouchii', 'choui', 'idiootocus', 'eiffingeri'] },
   none: { level: 0, noise: '高', cands: [], hidden: [] }
 };
 const ORDER = ['mid', 'high', 'low', 'none'];
@@ -453,7 +454,7 @@ const QUEUE = [
   { id: 'q6', time: '03:10', reason: '和過去不同', note: '過去 30 晚這個節點沒有出現', level: 2, cands: [['guentheri', 2], ['latouchii', 1], ['limnocharis', 1]] }
 ];
 const UNREVIEWED = [
-  ['澤蛙', 132, '高 118・中 14'], ['白頷樹蛙', 58, '高 49・中 9'], ['小雨蛙', 47, '高 40・中 7'],
+  ['澤蛙', 132, '高 118・中 14'], ['布氏樹蛙', 58, '高 49・中 9'], ['小雨蛙', 47, '高 40・中 7'],
   ['黑眶蟾蜍', 29, '高 29'], ['拉都希氏赤蛙', 18, '高 15・中 3'], ['鳥類（情境示意）', 6, '—'], ['昆蟲（情境示意）', 16, '—']
 ];
 
@@ -1739,7 +1740,7 @@ async function fieldDel(el) {
 
 /* ----- LINE 入口示意 ----- */
 VIEWS.entry = () => {
-  const tiles = [['go', 'record', IC.mic, '錄音辨識'], ['go', 'records', IC.list, '我的紀錄'], ['go', 'tour', IC.pin, '導覽'], ['go', 'soundscape', IC.wave, '聲景摘要'], ['toastMsg', '青蛙百科沿用 v1 的內容，不在這個原型裡。', IC.book, '青蛙百科'], ['go', 'about', IC.info, '說明']];
+  const tiles = [['go', 'record', IC.mic, '錄音辨識'], ['go', 'records', IC.list, '我的紀錄'], ['go', 'tour', IC.pin, '導覽'], ['go', 'soundscape', IC.wave, '聲景摘要'], ['toastMsg', '青蛙百科不在這個原型裡。2.0 會用 v1 的 38 種，內容依查核結果修正後再放入。', IC.book, '青蛙百科'], ['go', 'about', IC.info, '說明']];
   return `<section class="stack">
     <a class="btn quiet back" href="#more">${IC.back}更多</a>
     <h1>LINE 入口示意</h1>
@@ -1748,7 +1749,7 @@ VIEWS.entry = () => {
       <div class="phone-top"><span class="avatar">${frogSvg('')}</span><span><strong>蛙抵家</strong><br><span class="small muted">官方帳號（示意）</span></span></div>
       <div class="chat">
         <div class="bubble"><span>歡迎加入蛙抵家！點下方的「錄音辨識」，就能開始記錄身邊的蛙鳴。</span><span class="pill">加入好友時的歡迎訊息</span></div>
-        <div class="bubble"><span>【本週專家確認】你有 2 筆紀錄已確認：澤蛙 1 筆，和你的判斷一致；白頷樹蛙 1 筆，你原本選的是斑腿樹蛙。</span><button class="open" data-act="go" data-to="records">查看我的紀錄</button><span class="pill wait">推播・計入則數</span></div>
+        <div class="bubble"><span>【本週專家確認】你有 2 筆紀錄已確認：澤蛙 1 筆，和你的判斷一致；布氏樹蛙 1 筆，你原本選的是斑腿樹蛙。</span><button class="open" data-act="go" data-to="records">查看我的紀錄</button><span class="pill wait">推播・計入則數</span></div>
         <div class="bubble"><span>【昨晚的聲景】新海 A 點：312 筆判讀，6 筆待你審閱。</span><button class="open" data-act="go" data-to="soundscape">打開聲景摘要</button><span class="pill wait">推播・計入則數</span></div>
         <div class="bubble me"><span>我的紀錄</span></div>
         <div class="bubble"><span>你有 1 筆紀錄等待專家確認，2 筆已經確認。</span><span class="pill ok">回覆・不計費</span></div>
@@ -1771,7 +1772,7 @@ VIEWS.prefs = () => {
     <fieldset class="seg"><legend>辨識結果情境</legend>
       ${radio('pref-scenario', 'cycle', st.scenario, '依序輪流', '中等把握 → 高把握 → 低把握 → 無法辨識')}
       ${radio('pref-scenario', 'high', st.scenario, '高把握', '黑眶蟾蜍')}
-      ${radio('pref-scenario', 'mid', st.scenario, '中等把握（易混淆）', '白頷樹蛙和斑腿樹蛙')}
+      ${radio('pref-scenario', 'mid', st.scenario, '中等把握（易混淆）', '布氏樹蛙和斑腿樹蛙')}
       ${radio('pref-scenario', 'low', st.scenario, '低把握', '噪音大、叫聲微弱')}
       ${radio('pref-scenario', 'none', st.scenario, '無法辨識', '')}
     </fieldset>
@@ -1793,7 +1794,7 @@ VIEWS.prefs = () => {
 VIEWS.about = () => `<section class="stack">
   <a class="btn quiet back" href="#more">${IC.back}更多</a>
   <h1>關於這個原型</h1>
-  <p class="muted">蛙抵家 2.0 原型 v0.2（2026/10/30），依 Brief v1.6 與晶創計畫書子計畫一的審閱設計製作，用來檢驗「WebApp 加 LINE 入口」可不可行。</p>
+  <p class="muted">蛙抵家 2.0 原型 v0.2.1（2026/11/02），依 Brief v1.6 與晶創計畫書子計畫一的審閱設計製作，用來檢驗「WebApp 加 LINE 入口」可不可行。</p>
   <div class="panel"><p class="eyebrow">真的在運作</p><ul class="reasons"><li>麥克風錄音（關閉回音消除、降噪、自動增益）</li><li>波形與頻譜、裁切、音訊分析</li><li>錄音診斷與 WAV 匯出</li><li>實測錄音的保存與上傳（設定上傳位置之後）</li><li>LINE 登入（填入 LIFF ID 之後）</li></ul></div>
   <div class="panel"><p class="eyebrow">模擬的</p><ul class="reasons"><li>辨識結果與候選排序</li><li>參考叫聲（合成的示意音，不是真實叫聲）</li><li>物種的區辨重點（待大浪據與專家提供）</li><li>場域內容、聲景摘要、專家確認</li></ul></div>
   <div class="panel"><p class="eyebrow">不在這個原型裡</p><ul class="reasons"><li>專業監測後台（規劃為獨立網頁，不放在 LINE 裡）</li><li>蛙鳴地圖、青蛙百科</li><li>與大浪據平臺、辨識 API 的串接</li></ul></div>
